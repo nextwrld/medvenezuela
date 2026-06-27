@@ -1,0 +1,42 @@
+/* MedVene - App styles */
+
+/* Smooth scroll */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Remove tap highlight on mobile */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d4d4d8;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a1a1aa;
+}
+
+/* Focus styles */
+*:focus-visible {
+  outline: 2px solid #DC2626;
+  outline-offset: 2px;
+}
+
+/* Selection */
+::selection {
+  background: #fecaca;
+  color: #7f1d1d;
+}

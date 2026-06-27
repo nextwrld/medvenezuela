@@ -1,0 +1,15 @@
+node_modules
+dist
+.git
+.env
+.env.*
+*.md
+openspec
+.atl
+vitest.config.ts
+vitest.integration.config.ts
+vitest.setup.ts
+eslint.config.js
+tsconfig*.json
+*.test.ts
+*.spec.ts

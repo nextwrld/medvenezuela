@@ -1,0 +1,77 @@
+# ─── MVP Deploy Hardening — docker-compose.yml ───────────────────
+# Stack: MySQL 8 + App (Hono/tRPC) + Cloudflared tunnel
+# Usage:  docker compose up -d
+
+services:
+  # ─── MySQL 8 ──────────────────────────────────────────────────
+  db:
+    image: mysql:8.0
+    container_name: medvene_db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: medvene
+      MYSQL_USER: medvene
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-changeme_strong}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-changeme_root_strong}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./scripts/backup.sh:/backups/backup.sh:ro
+      - mysql_backups:/backups
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-changeme_root_strong}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    # No ports exposed — internal network only
+    # Access via: docker exec -it medvene_db mysql -u medvene -p
+
+  # ─── App (Hono + tRPC + static files) ─────────────────────────
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: medvene_app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      APP_ID: ${APP_ID}
+      APP_SECRET: ${APP_SECRET}
+      DATABASE_URL: mysql://medvene:${MYSQL_PASSWORD:-changeme_strong}@db:3306/medvene
+      KIMI_AUTH_URL: ${KIMI_AUTH_URL:-https://placeholder.example.com}
+      KIMI_OPEN_URL: ${KIMI_OPEN_URL:-https://placeholder.example.com}
+      OWNER_UNION_ID: ${OWNER_UNION_ID:-}
+    networks:
+      - internal
+    # Cloudflared connects here — no ports exposed to host
+
+  # ─── Cloudflare Tunnel (no open ports, SSL at edge) ────────────
+  # Requires: CLOUDFLARE_TUNNEL_TOKEN env var
+  # Create a tunnel at https://one.dash.cloudflare.com/ → Networks → Tunnels
+  # Route: <your-subdomain>.<your-domain>.com → http://app:3000
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: medvene_tunnel
+    restart: unless-stopped
+    command: tunnel run
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      - app
+    networks:
+      - internal
+
+volumes:
+  mysql_data:
+    driver: local
+  mysql_backups:
+    driver: local
+
+networks:
+  internal:
+    driver: bridge
