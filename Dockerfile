@@ -10,8 +10,10 @@ WORKDIR /build
 # Copy lockfile + manifests first for layer caching
 COPY app/package.json app/package-lock.json* ./
 
-# Reproducible install — npm ci strictly respects package-lock.json
-RUN npm ci
+# Reproducible install — npm ci with devDeps forced
+RUN npm ci --include=dev
+# Verify the binaries exist before build (catches lockfile drift early)
+RUN ls node_modules/.bin/vite node_modules/.bin/esbuild
 
 # Copy the rest of the source
 COPY app/ ./
@@ -23,7 +25,8 @@ ENV VITE_KIMI_AUTH_URL=${VITE_KIMI_AUTH_URL}
 ENV VITE_APP_ID=${VITE_APP_ID}
 
 # Build: vite (frontend) + esbuild (server bundle)
-RUN npm run build
+# Use npx explicitly to resolve local binaries even if PATH has issues
+RUN npx --no-install vite build && npx --no-install esbuild api/boot.ts --platform=node --bundle --format=esm --outdir=dist --banner:js="import { createRequire } from 'module';const require = createRequire(import.meta.url);"
 
 # ─── Stage 2: Runtime ────────────────────────────────────────────
 FROM node:20-slim AS runtime
