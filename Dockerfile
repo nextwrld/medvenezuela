@@ -7,12 +7,16 @@ FROM node:20-slim AS builder
 
 WORKDIR /build
 
-# Copy lockfile + manifests first for layer caching
-COPY app/package.json app/package-lock.json* ./
+# Build stage needs devDeps — force NODE_ENV so npm doesn't skip them
+ENV NODE_ENV=development
 
-# Reproducible install — npm ci with devDeps forced
-RUN npm ci --include=dev
-# Verify the binaries exist before build (catches lockfile drift early)
+# Copy lockfile + manifests first for layer caching
+COPY app/package.json app/package-lock.json ./
+
+# Install all deps (devDeps required for vite + esbuild)
+RUN npm install
+
+# Verify the binaries exist before build
 RUN ls node_modules/.bin/vite node_modules/.bin/esbuild
 
 # Copy the rest of the source
@@ -25,8 +29,7 @@ ENV VITE_KIMI_AUTH_URL=${VITE_KIMI_AUTH_URL}
 ENV VITE_APP_ID=${VITE_APP_ID}
 
 # Build: vite (frontend) + esbuild (server bundle)
-# Use npx explicitly to resolve local binaries even if PATH has issues
-RUN npx --no-install vite build && npx --no-install esbuild api/boot.ts --platform=node --bundle --format=esm --outdir=dist --banner:js="import { createRequire } from 'module';const require = createRequire(import.meta.url);"
+RUN npm run build
 
 # ─── Stage 2: Runtime ────────────────────────────────────────────
 FROM node:20-slim AS runtime
@@ -34,8 +37,8 @@ FROM node:20-slim AS runtime
 WORKDIR /app
 
 # Install production deps + drizzle-kit (needed for migrations at startup)
-COPY app/package.json app/package-lock.json* ./
-RUN npm ci --omit=dev
+COPY app/package.json app/package-lock.json ./
+RUN npm install --omit=dev
 RUN npm install drizzle-kit@0.31.10
 
 # Copy built artifacts
