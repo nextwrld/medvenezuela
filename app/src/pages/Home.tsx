@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router";
 import { Search, Activity, Package, SlidersHorizontal, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,7 @@ import SolicitudCard from "@/components/SolicitudCard";
 import { ESTADOS_VENEZUELA, ZONAS_EMERGENCIA } from "@db/seed";
 
 export default function Home() {
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selectedEstado, setSelectedEstado] = useState("");
@@ -78,6 +80,38 @@ export default function Home() {
       </div>
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
+        <section className="mb-6 overflow-hidden rounded-2xl border border-red-200 bg-gradient-to-r from-red-600 via-red-500 to-orange-400 text-white shadow-sm">
+          <div className="flex flex-col gap-4 px-5 py-5 sm:px-6 sm:py-6 lg:flex-row lg:items-center lg:justify-between">
+            <div className="space-y-1 text-center lg:text-left">
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/80">
+                Emergencia activa
+              </p>
+              <h2 className="text-xl font-bold tracking-tight sm:text-2xl">
+                Ayudemos a los afectados del terremoto
+              </h2>
+              <p className="text-sm text-white/85 sm:text-base">
+                Conecta rápidamente donaciones y nuevas solicitudes de medicamentos.
+              </p>
+            </div>
+
+            <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:justify-center lg:justify-end">
+              <Button
+                asChild
+                variant="outline"
+                className="h-11 border-white/50 bg-white/10 px-5 text-white hover:bg-white/20 hover:text-white"
+              >
+                <a href="#como-ayudar">¿Cómo ayudar?</a>
+              </Button>
+              <Button
+                onClick={() => navigate("/solicitar")}
+                className="h-11 bg-white px-5 font-semibold text-red-700 hover:bg-red-50"
+              >
+                Nueva Solicitud
+              </Button>
+            </div>
+          </div>
+        </section>
+
         {/* Search and filters */}
         <div className="mb-6 space-y-3">
           <div className="flex gap-2">
@@ -201,6 +235,63 @@ export default function Home() {
           )}
         </div>
 
+        <section
+          id="como-ayudar"
+          className="mb-8 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm sm:p-6"
+        >
+            <div className="mb-5 text-center sm:text-left">
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-red-600">
+                Cómo ayudar
+              </p>
+              <h2 className="mt-2 text-xl font-bold tracking-tight text-zinc-900 sm:text-2xl">
+                Paso a paso para apoyar una solicitud
+              </h2>
+              <p className="mt-2 text-sm text-zinc-600 sm:text-base">
+                Sigue este proceso para ayudar de forma rápida, segura y ordenada.
+              </p>
+            </div>
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {[
+              {
+                step: "01",
+                title: "Revisa la necesidad",
+                description:
+                  "Usa la búsqueda y los filtros para encontrar solicitudes activas según medicamento, hospital, ciudad o nivel de urgencia.",
+              },
+              {
+                step: "02",
+                title: "Confirma que puedes ayudar",
+                description:
+                  "Abre la solicitud, verifica la cantidad requerida y asegúrate de contar con el medicamento o con una forma real de conseguirlo.",
+              },
+              {
+                step: "03",
+                title: "Contacta al solicitante",
+                description:
+                  "Escribe o llama al contacto publicado para confirmar disponibilidad, coordinar la entrega y evitar esfuerzos duplicados.",
+              },
+              {
+                step: "04",
+                title: "Coordina o crea una nueva solicitud",
+                description:
+                  "Si no encontraste la necesidad publicada, usa Nueva Solicitud para registrar el caso y hacerlo visible a otros donantes.",
+              },
+            ].map((item) => (
+              <div
+                key={item.step}
+                className="rounded-xl border border-zinc-200 bg-zinc-50 p-4"
+              >
+                <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-full bg-red-600 text-sm font-bold text-white">
+                  {item.step}
+                </div>
+                <h3 className="text-base font-semibold text-zinc-900">{item.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-zinc-600">{item.description}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
         {/* Results count */}
         {!isLoading && data && (
           <div className="mb-4">
@@ -316,24 +407,31 @@ export default function Home() {
       <footer className="bg-white border-t border-zinc-200 mt-12">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-zinc-500">
-            <div className="flex items-center gap-2">
+            <a
+              href="https://nextwrld.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 hover:text-zinc-700"
+            >
               <div className="w-5 h-5 bg-red-600 rounded flex items-center justify-center">
                 <span className="text-white font-bold text-[8px]">M</span>
               </div>
-              <span>
-                MedVene · Plataforma de código abierto para emergencias médicas
-              </span>
-            </div>
-            <div className="flex gap-4">
+              <span>MedVene · Plataforma para emergencias médicas</span>
+            </a>
+            <div className="flex flex-col items-center gap-1 text-center sm:items-end sm:text-right">
               <span>Venezuela 2026</span>
               <a
-                href="https://github.com"
+                href="https://nextwrld.com/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-red-600 hover:underline"
               >
-                GitHub
+                Hecho por NextWrld
               </a>
+              <span className="max-w-xs text-zinc-500">
+                A disposición para apoyar cualquier proyecto o necesidad que sume
+                en la respuesta ante este desastre.
+              </span>
             </div>
           </div>
         </div>

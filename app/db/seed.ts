@@ -5,7 +5,6 @@ export const ESTADOS_VENEZUELA = [
   "Carabobo",
   "Aragua",
   "Miranda",
-  "Vargas",
   "Zulia",
   "Mérida",
   "Táchira",
@@ -36,7 +35,6 @@ export const ZONAS_EMERGENCIA = [
   "Aragua",
   "Miranda",
   "Distrito Capital",
-  "Vargas",
 ] as const;
 
 async function seed() {
