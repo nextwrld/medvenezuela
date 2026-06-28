@@ -47,7 +47,8 @@ WORKDIR /app
 COPY app/package.json app/pnpm-lock.yaml ./
 ENV NODE_ENV=production
 RUN pnpm install --prod --frozen-lockfile
-RUN pnpm add drizzle-kit@0.31.10
+# Install drizzle-kit globally so the entrypoint npx finds it
+RUN npm install -g drizzle-kit@0.31.10
 
 # Copy built artifacts
 COPY --from=builder /build/dist ./dist
@@ -66,4 +67,4 @@ ENV PORT=3000
 EXPOSE 3000
 
 # Run migrations then start the server
-CMD ["sh", "-c", "npx drizzle-kit migrate && node dist/boot.js"]
+CMD ["sh", "-c", "drizzle-kit migrate && node dist/boot.js"]

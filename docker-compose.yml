@@ -58,7 +58,7 @@ services:
     image: cloudflare/cloudflared:latest
     container_name: medvene_tunnel
     restart: unless-stopped
-    command: tunnel run
+    command: tunnel --no-autoupdate
     environment:
       TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
     depends_on:
