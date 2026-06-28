@@ -49,7 +49,8 @@ ENV NODE_ENV=production
 RUN pnpm install --prod --frozen-lockfile
 
 # Install drizzle-kit locally in runtime so pnpm creates the correct module layout
-RUN pnpm add drizzle-kit@0.31.10 --save-prod --no-frozen-lockfile
+# `pnpm add` cannot use --frozen-lockfile; disable lockfile writes for this image-only install
+RUN pnpm add drizzle-kit@0.31.10 --save-prod --lockfile=false
 
 # Copy built artifacts
 COPY --from=builder /build/dist ./dist
