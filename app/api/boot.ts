@@ -57,7 +57,7 @@ if (env.isProduction) {
 
   // Use the validated port from `env.port` rather than re-parsing the
   // raw env value; parseEnv has already enforced bounds.
-  serve({ fetch: app.fetch, port: env.port }, () => {
-    console.log(`Server running on http://localhost:${env.port}/`);
+  serve({ fetch: app.fetch, port: env.port, hostname: "0.0.0.0" }, () => {
+    console.log(`Server running on http://0.0.0.0:${env.port}/`);
   });
 }
