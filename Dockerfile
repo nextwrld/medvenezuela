@@ -8,10 +8,10 @@ FROM node:20-slim AS builder
 WORKDIR /build
 
 # Copy lockfile + manifests first for layer caching
-COPY app/package.json app/package-lock.json* app/pnpm-lock.yaml* ./
+COPY app/package.json app/package-lock.json* ./
 
-# Install all deps (including devDeps needed for vite + esbuild)
-RUN npm install --frozen-lockfile 2>/dev/null || npm install
+# Reproducible install — npm ci strictly respects package-lock.json
+RUN npm ci
 
 # Copy the rest of the source
 COPY app/ ./
@@ -31,8 +31,8 @@ FROM node:20-slim AS runtime
 WORKDIR /app
 
 # Install production deps + drizzle-kit (needed for migrations at startup)
-COPY app/package.json app/package-lock.json* app/pnpm-lock.yaml* ./
-RUN npm install --omit=dev --frozen-lockfile 2>/dev/null || npm install --omit=dev
+COPY app/package.json app/package-lock.json* ./
+RUN npm ci --omit=dev
 RUN npm install drizzle-kit@0.31.10
 
 # Copy built artifacts

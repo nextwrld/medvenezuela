@@ -1,0 +1,36 @@
+# ─── Dev: MySQL only — App runs on host via `npm run dev` ─────────
+# Usage:  docker compose -f docker-compose.dev.yml up -d
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: medvene_dev_db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: medvene
+      MYSQL_USER: medvene
+      MYSQL_PASSWORD: medvene_dev
+      MYSQL_ROOT_PASSWORD: medvene_dev_root
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_dev_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  adminer:
+    image: adminer:5
+    container_name: medvene_adminer
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  mysql_dev_data:
+    driver: local
