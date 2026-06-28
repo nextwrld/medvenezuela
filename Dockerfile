@@ -48,11 +48,8 @@ COPY app/package.json app/pnpm-lock.yaml ./
 ENV NODE_ENV=production
 RUN pnpm install --prod --frozen-lockfile
 
-# Copy drizzle-kit (and its deps) from the builder's node_modules
-# drizzle-kit is a devDep we need only for migrations at startup
-COPY --from=builder /build/node_modules/drizzle-kit ./node_modules/drizzle-kit
-COPY --from=builder /build/node_modules/drizzle-orm ./node_modules/drizzle-orm
-COPY --from=builder /build/node_modules/.bin/drizzle-kit ./node_modules/.bin/drizzle-kit
+# Install drizzle-kit locally in runtime so pnpm creates the correct module layout
+RUN pnpm add drizzle-kit@0.31.10 --save-prod --no-frozen-lockfile
 
 # Copy built artifacts
 COPY --from=builder /build/dist ./dist
@@ -71,4 +68,4 @@ ENV PORT=3000
 EXPOSE 3000
 
 # Run migrations then start the server
-CMD ["sh", "-c", "./node_modules/.bin/drizzle-kit migrate && node dist/boot.js"]
+CMD ["sh", "-c", "pnpm exec drizzle-kit migrate && node dist/boot.js"]
