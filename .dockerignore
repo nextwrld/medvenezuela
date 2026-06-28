@@ -1,5 +1,7 @@
 node_modules
+**/node_modules
 dist
+**/dist
 .git
 .env
 .env.*
@@ -13,5 +15,4 @@ eslint.config.js
 tsconfig*.json
 *.test.ts
 *.spec.ts
-pnpm-lock.yaml
-pnpm-lock.*
+package-lock.json

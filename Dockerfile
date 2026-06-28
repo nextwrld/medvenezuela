@@ -5,16 +5,19 @@
 # ─── Stage 1: Build ──────────────────────────────────────────────
 FROM node:20-slim AS builder
 
+# Install pnpm globally
+RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
+
 WORKDIR /build
 
-# Build stage needs devDeps — force NODE_ENV so npm doesn't skip them
+# Build stage needs devDeps — force NODE_ENV so pnpm doesn't skip them
 ENV NODE_ENV=development
 
 # Copy lockfile + manifests first for layer caching
-COPY app/package.json app/package-lock.json ./
+COPY app/package.json app/pnpm-lock.yaml ./
 
-# Install all deps (devDeps required for vite + esbuild)
-RUN npm install
+# Install all deps via pnpm (matches the project)
+RUN pnpm install --frozen-lockfile
 
 # Verify the binaries exist before build
 RUN ls node_modules/.bin/vite node_modules/.bin/esbuild
@@ -29,17 +32,21 @@ ENV VITE_KIMI_AUTH_URL=${VITE_KIMI_AUTH_URL}
 ENV VITE_APP_ID=${VITE_APP_ID}
 
 # Build: vite (frontend) + esbuild (server bundle)
-RUN npm run build
+RUN pnpm run build
 
 # ─── Stage 2: Runtime ────────────────────────────────────────────
 FROM node:20-slim AS runtime
 
+# Install pnpm globally
+RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
+
 WORKDIR /app
 
 # Install production deps + drizzle-kit (needed for migrations at startup)
-COPY app/package.json app/package-lock.json ./
-RUN npm install --omit=dev
-RUN npm install drizzle-kit@0.31.10
+COPY app/package.json app/pnpm-lock.yaml ./
+ENV NODE_ENV=production
+RUN pnpm install --prod --frozen-lockfile
+RUN pnpm add drizzle-kit@0.31.10
 
 # Copy built artifacts
 COPY --from=builder /build/dist ./dist
