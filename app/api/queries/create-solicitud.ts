@@ -50,9 +50,16 @@ export interface CreateSolicitudInput {
   notas?: string;
 }
 
+// `CreateSolicitudResult` carries both credentials the closure-restricted
+// flow requires. `pinCierre` is returned exactly once to the creator on
+// the success screen and is never re-exposed by the public detail or
+// management endpoints — it is the sole authorization for the terminal
+// `recibido` transition. See `solicitud-closure-security` for the
+// validation, throttle, and audit helpers that consume this value.
 export interface CreateSolicitudResult {
   id: number;
   pinGestion: string;
+  pinCierre: string;
 }
 
 type SolicitudInsert = typeof schema.solicitudes.$inferInsert;
@@ -61,11 +68,17 @@ export async function createSolicitud(
   input: CreateSolicitudInput,
 ): Promise<CreateSolicitudResult> {
   const db = getDb();
+  // Both PINs are generated up front per attempt. They are independent
+  // draws from the same `generatePin()` CSPRNG; treating them together
+  // keeps the retry loop symmetrical and ensures every collision retry
+  // re-rolls both values, never leaking a previously-attempted closure
+  // credential into the next insert.
   const values: SolicitudInsert = {
     ...input,
     urgencia: input.urgencia ?? "moderado",
     estatus: "activo",
     pinGestion: generatePin(),
+    pinCierre: generatePin(),
   };
 
   for (let attempt = 0; attempt < MAX_PIN_RETRIES; attempt++) {
@@ -74,11 +87,19 @@ export async function createSolicitud(
       return {
         id: Number(result[0].insertId),
         pinGestion: values.pinGestion as string,
+        pinCierre: values.pinCierre as string,
       };
     } catch (err) {
       if (!isDuplicateKeyError(err)) throw err;
-      // PIN collision: regenerate and retry on the next loop iteration.
+      // PIN collision: regenerate both PINs and retry on the next loop
+      // iteration. The schema currently only enforces uniqueness on
+      // `pinGestion`; `pinCierre` is still backfill-safe in the database
+      // (the follow-up migration will promote it to NOT NULL + UNIQUE),
+      // so only the gestion PIN collision is what actually reaches this
+      // catch in production. Regenerating `pinCierre` here is defensive
+      // and keeps the loop body single-shape across both columns.
       values.pinGestion = generatePin();
+      values.pinCierre = generatePin();
     }
   }
 

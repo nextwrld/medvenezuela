@@ -58,8 +58,10 @@ export default function NuevaSolicitud() {
   const [form, setForm] = useState<FormData>(initialForm);
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
   const [submitted, setSubmitted] = useState(false);
-  const [result, setResult] = useState<{ id: number; pinGestion: string } | null>(null);
-  const [copiedPin, setCopiedPin] = useState(false);
+  const [result, setResult] = useState<
+    { id: number; pinGestion: string; pinCierre: string } | null
+  >(null);
+  const [copiedPinCierre, setCopiedPinCierre] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
 
   const createMutation = trpc.solicitudes.create.useMutation({
@@ -125,12 +127,15 @@ export default function NuevaSolicitud() {
     }
   };
 
-  const copyToClipboard = async (text: string, type: "pin" | "link") => {
+  const copyToClipboard = async (
+    text: string,
+    type: "pin-cierre" | "link"
+  ) => {
     try {
       await navigator.clipboard.writeText(text);
-      if (type === "pin") {
-        setCopiedPin(true);
-        setTimeout(() => setCopiedPin(false), 2000);
+      if (type === "pin-cierre") {
+        setCopiedPinCierre(true);
+        setTimeout(() => setCopiedPinCierre(false), 2000);
       } else {
         setCopiedLink(true);
         setTimeout(() => setCopiedLink(false), 2000);
@@ -142,9 +147,9 @@ export default function NuevaSolicitud() {
       input.select();
       document.execCommand("copy");
       document.body.removeChild(input);
-      if (type === "pin") {
-        setCopiedPin(true);
-        setTimeout(() => setCopiedPin(false), 2000);
+      if (type === "pin-cierre") {
+        setCopiedPinCierre(true);
+        setTimeout(() => setCopiedPinCierre(false), 2000);
       } else {
         setCopiedLink(true);
         setTimeout(() => setCopiedLink(false), 2000);
@@ -176,32 +181,36 @@ export default function NuevaSolicitud() {
               llegar a más donantes.
             </p>
 
-            {/* PIN */}
+            {/* PIN de cierre — único código que el usuario necesita
+                guardar. El estado se gestiona directamente desde la
+                página de detalle sin necesidad del PIN de gestión. */}
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
-              <p className="text-xs font-medium text-amber-700 uppercase tracking-wide mb-2">
-                PIN de gestión (guárdalo)
-              </p>
-              <div className="flex items-center justify-center gap-3">
-                <span className="text-3xl font-bold text-amber-800 tracking-widest font-mono">
-                  {result.pinGestion}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => copyToClipboard(result.pinGestion, "pin")}
-                  className="border-amber-300 text-amber-700 hover:bg-amber-100"
-                >
-                  {copiedPin ? (
-                    <Check className="w-4 h-4" />
-                  ) : (
-                    <Copy className="w-4 h-4" />
-                  )}
-                </Button>
+                <p className="text-xs font-medium text-amber-700 uppercase tracking-wide mb-2">
+                  PIN de cierre (guárdalo — no lo compartas)
+                </p>
+                <div className="flex items-center justify-center gap-3">
+                  <span className="text-3xl font-bold text-amber-800 tracking-widest font-mono">
+                    {result.pinCierre}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      copyToClipboard(result.pinCierre, "pin-cierre")
+                    }
+                    className="border-amber-300 text-amber-700 hover:bg-amber-100"
+                  >
+                    {copiedPinCierre ? (
+                      <Check className="w-4 h-4" />
+                    ) : (
+                      <Copy className="w-4 h-4" />
+                    )}
+                  </Button>
+                </div>
+                <p className="text-xs text-amber-600 mt-2">
+                  Usa el PIN de cierre para marcar como recibido
+                </p>
               </div>
-              <p className="text-xs text-amber-600 mt-2">
-                Usa este PIN para marcar tu solicitud como recibida
-              </p>
-            </div>
 
             {/* Link */}
             <div className="bg-zinc-50 rounded-xl border border-zinc-200 p-4 mb-6">

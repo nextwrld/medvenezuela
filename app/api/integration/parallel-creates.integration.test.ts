@@ -59,6 +59,9 @@ describe("integration: parallel create surface (structural)", () => {
   it("exposes the createSolicitud input and result types so the router can stay in sync", () => {
     // This is a type-level assertion: if the input shape drifts, the
     // compiler will flag any caller that depended on the old fields.
+    // The restricted-closure flow added `pinCierre` to the result; the
+    // router relies on that field to hand both credentials to the
+    // success screen exactly once.
     const input: CreateSolicitudInput = {
       medicamento: "Amoxicilina",
       principioActivo: "Amoxicilina",
@@ -70,9 +73,19 @@ describe("integration: parallel create surface (structural)", () => {
       nombreSolicitante: "Dr. Pérez",
       rolSolicitante: "medico",
     };
-    const result: CreateSolicitudResult = { id: 1, pinGestion: "123456" };
+    const result: CreateSolicitudResult = {
+      id: 1,
+      pinGestion: "123456",
+      pinCierre: "654321",
+    };
     expect(result.id).toBe(1);
     expect(result.pinGestion).toBe("123456");
+    expect(result.pinCierre).toBe("654321");
+    // Pin the closure-flow invariant: the two PINs MUST be distinct
+    // values on the same result. The production generator draws them
+    // independently, so any future refactor that aliases one onto the
+    // other would surface as a same-value regression here.
+    expect(result.pinGestion).not.toBe(result.pinCierre);
     expect(input.rolSolicitante).toBe("medico");
   });
 });

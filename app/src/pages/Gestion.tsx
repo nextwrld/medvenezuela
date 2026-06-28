@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/providers/trpc";
 import Header from "@/components/Header";
 import UrgencyBadge from "@/components/UrgencyBadge";
@@ -55,12 +56,20 @@ export default function Gestion() {
   const [inputPin, setInputPin] = useState(pin ?? "");
   const [searchedPin, setSearchedPin] = useState(pin ?? "");
   const [updateSuccess, setUpdateSuccess] = useState(false);
+  const [updateError, setUpdateError] = useState<string | null>(null);
+  // Closure-form state. Only relevant when transitioning to `recibido`;
+  // cleared on success and when the user changes solicitud.
+  const [pinCierre, setPinCierre] = useState("");
+  const [notasCierre, setNotasCierre] = useState("");
 
   useEffect(() => {
     if (pin) {
       setInputPin(pin);
       setSearchedPin(pin);
       setUpdateSuccess(false);
+      setUpdateError(null);
+      setPinCierre("");
+      setNotasCierre("");
     }
   }, [pin]);
 
@@ -70,8 +79,28 @@ export default function Gestion() {
   );
 
   const updateMutation = trpc.solicitudes.updateStatus.useMutation({
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // The router returns `{ success: false, throttled: true, error, resetsAt }`
+      // for blocked closure attempts instead of throwing. Treat those as a
+      // user-visible error so the throttle signal is not silently dropped.
+      if (data && data.success === false) {
+        const until = data.resetsAt
+          ? new Date(data.resetsAt).toLocaleTimeString("es-VE", {
+              hour: "2-digit",
+              minute: "2-digit",
+            })
+          : null;
+        setUpdateError(
+          data.throttled && until
+            ? `${data.error ?? "Demasiados intentos."} Reintente después de las ${until}.`
+            : (data.error ?? "No se pudo actualizar el estado.")
+        );
+        return;
+      }
+      setUpdateError(null);
       setUpdateSuccess(true);
+      setPinCierre("");
+      setNotasCierre("");
       setTimeout(() => setUpdateSuccess(false), 3000);
     },
   });
@@ -81,6 +110,9 @@ export default function Gestion() {
     if (inputPin.length >= 6) {
       setSearchedPin(inputPin);
       setUpdateSuccess(false);
+      setUpdateError(null);
+      setPinCierre("");
+      setNotasCierre("");
       // Update URL without navigation
       window.history.replaceState(null, "", `/gestion/${inputPin}`);
     }
@@ -91,10 +123,29 @@ export default function Gestion() {
     const nextStatus = statusFlow[solicitud.estatus];
     if (!nextStatus) return;
 
+    // Non-terminal transitions: the management PIN is sufficient; the
+    // closure credential is intentionally not consulted here so a leaked
+    // `pinGestion` cannot drive a solicitud to the terminal state.
+    if (nextStatus !== "recibido") {
+      updateMutation.mutate({
+        id: solicitud.id,
+        pinGestion: searchedPin,
+        estatus: nextStatus,
+      });
+      return;
+    }
+
+    // Terminal close: `pinCierre` is mandatory; `notasCierre` is optional.
+    if (!pinCierre.trim()) {
+      return;
+    }
+
     updateMutation.mutate({
       id: solicitud.id,
-      pin: searchedPin,
+      pinGestion: searchedPin,
       estatus: nextStatus,
+      pinCierre: pinCierre.trim(),
+      notasCierre: notasCierre.trim() || undefined,
     });
   };
 
@@ -188,6 +239,18 @@ export default function Gestion() {
                 </div>
               )}
 
+              {/* Error message — surfaced from any update mutation failure,
+                  including throttle responses. Throttle responses come back
+                  through `onSuccess({ success: false, throttled, ... })`
+                  rather than as a thrown error, so we keep a dedicated
+                  `updateError` channel that captures both shapes. */}
+              {updateError && !updateMutation.isPending && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2">
+                  <AlertTriangle className="w-5 h-5 text-red-600 shrink-0" />
+                  <p className="text-sm text-red-700">{updateError}</p>
+                </div>
+              )}
+
               {/* Solicitud card */}
               <div className="border border-zinc-200 rounded-xl p-4 mb-4 space-y-3">
                 <div className="flex items-center justify-between">
@@ -266,40 +329,94 @@ export default function Gestion() {
                 {/* Status actions */}
                 {solicitud.estatus !== "recibido" && (
                   <>
-                    <Button
-                      onClick={handleUpdateStatus}
-                      disabled={updateMutation.isPending}
-                      className={`w-full text-white h-12 gap-2 ${statusLabels[solicitud.estatus].color}`}
-                    >
-                      {updateMutation.isPending ? (
-                        <>
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                          Actualizando...
-                        </>
-                      ) : (
-                        <>
-                          {statusLabels[solicitud.estatus].button}
-                          <ChevronRight className="w-4 h-4" />
-                        </>
-                      )}
-                    </Button>
-
+                    {/* Intermediate transition: `activo` -> `en_proceso`.
+                        The management PIN is sufficient; the closure PIN
+                        is intentionally not consulted here. */}
                     {solicitud.estatus === "activo" && (
                       <Button
-                        variant="outline"
-                        onClick={() =>
-                          updateMutation.mutate({
-                            id: solicitud.id,
-                            pin: searchedPin,
-                            estatus: "recibido",
-                          })
-                        }
+                        onClick={handleUpdateStatus}
                         disabled={updateMutation.isPending}
-                        className="w-full h-11 border-green-300 text-green-700 hover:bg-green-50 gap-2"
+                        className={`w-full text-white h-12 gap-2 ${statusLabels[solicitud.estatus].color}`}
                       >
-                        <CheckCircle className="w-4 h-4" />
-                        Marcar directamente como RECIBIDO
+                        {updateMutation.isPending ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Actualizando...
+                          </>
+                        ) : (
+                          <>
+                            {statusLabels[solicitud.estatus].button}
+                            <ChevronRight className="w-4 h-4" />
+                          </>
+                        )}
                       </Button>
+                    )}
+
+                    {/* Terminal transition: `en_proceso` -> `recibido`.
+                        The closure PIN is mandatory; the management PIN
+                        is still required to look up the solicitud but it
+                        alone cannot close it. The spec's split-PIN
+                        contract is enforced server-side; the UI just
+                        surfaces the inputs. */}
+                    {solicitud.estatus === "en_proceso" && (
+                      <div className="space-y-3 p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
+                        <p className="text-xs font-medium text-yellow-800 uppercase tracking-wide">
+                          Confirmar cierre
+                        </p>
+                        <div>
+                          <label className="block text-xs font-medium text-zinc-700 mb-1">
+                            PIN de cierre <span className="text-red-500">*</span>
+                          </label>
+                          <Input
+                            value={pinCierre}
+                            onChange={(e) =>
+                              setPinCierre(
+                                e.target.value.replace(/\D/g, "").slice(0, 6)
+                              )
+                            }
+                            placeholder="000000"
+                            maxLength={6}
+                            inputMode="numeric"
+                            className="h-12 text-center font-mono text-lg tracking-widest"
+                            disabled={updateMutation.isPending}
+                          />
+                          <p className="text-[11px] text-zinc-500 mt-1">
+                            Solicita el PIN de cierre al solicitante
+                          </p>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-zinc-700 mb-1">
+                            Notas de cierre (opcional)
+                          </label>
+                          <Textarea
+                            value={notasCierre}
+                            onChange={(e) => setNotasCierre(e.target.value)}
+                            placeholder="Información adicional sobre el cierre..."
+                            rows={2}
+                            className="resize-none bg-white"
+                            disabled={updateMutation.isPending}
+                          />
+                        </div>
+                        <Button
+                          onClick={handleUpdateStatus}
+                          disabled={
+                            updateMutation.isPending || !pinCierre.trim()
+                          }
+                          className={`w-full text-white h-12 gap-2 ${statusLabels[solicitud.estatus].color}`}
+                        >
+                          {updateMutation.isPending ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              Actualizando...
+                            </>
+                          ) : (
+                            <>
+                              {statusLabels[solicitud.estatus].button}
+                              <ChevronRight className="w-4 h-4" />
+                            </>
+                          )}
+                        </Button>
+                      </div>
                     )}
                   </>
                 )}

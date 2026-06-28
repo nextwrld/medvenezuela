@@ -1,13 +1,13 @@
 import { useNavigate } from "react-router";
 import { MapPin, Building2, Package, Calendar } from "lucide-react";
-import type { Solicitud } from "@db/schema";
+import type { PublicSolicitud } from "@db/schema";
 import UrgencyBadge from "./UrgencyBadge";
 import StatusBadge from "./StatusBadge";
 import WhatsAppButton from "./WhatsAppButton";
 import ShareButton from "./ShareButton";
 
 interface SolicitudCardProps {
-  solicitud: Solicitud;
+  solicitud: PublicSolicitud;
 }
 
 function timeAgo(date: Date): string {

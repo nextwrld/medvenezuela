@@ -1,0 +1,92 @@
+schema: spec-driven
+
+context: |
+  Project: medvenezuela (MedVene) — fullstack emergency medical platform for Venezuela post-earthquake (June 2026).
+  Stack: React 19 + Vite 7 + TypeScript (frontend), Hono + tRPC 11 + Drizzle ORM + MySQL (backend), OAuth (Kimi) + JWT.
+  Testing: vitest 4.x with two suites (unit, integration); strict TDD default.
+  Style: Mobile-first, system fonts, icon-only UI, optimized for unstable 3G/LTE.
+
+rules:
+  proposal:
+    - Include rollback plan for risky changes
+    - State whether the change affects production data or auth surfaces
+  specs:
+    - Use Given/When/Then for scenarios
+    - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY)
+    - Reference domain (solicitudes, auth, localAuth, db) explicitly
+  design:
+    - Include sequence diagrams for complex flows
+    - Document architecture decisions with rationale
+    - Note any auth, schema, or env contract changes
+  tasks:
+    - Group by phase, use hierarchical numbering
+    - Keep tasks completable in one session
+    - Mark RED-GREEN-REFACTOR split when strict_tdd is enabled
+  apply:
+    - Follow existing code patterns
+    - Keep changes under one file/folder per task when possible
+    tdd: true
+    test_command: "npm test"
+    test_integration_command: "npm run test:integration"
+  verify:
+    test_command: "npm run release:verify"
+    build_command: "npm run build"
+    coverage_threshold: 0
+  archive:
+    - Warn before merging destructive deltas
+    - Move archived change into openspec/changes/archive/YYYY-MM-DD-{name}/
+
+strict_tdd: true
+
+testing:
+  strict_tdd: true
+  detected: 2026-06-28
+  test_runner:
+    command: "npm test"
+    framework: vitest
+    version: "^4.0.16"
+  layers:
+    unit:
+      available: true
+      command: "npm test"
+      config: "vitest.config.ts"
+      include:
+        - "api/**/*.test.ts"
+        - "api/**/*.spec.ts"
+        - "scripts/**/*.test.ts"
+        - "scripts/**/*.test.mjs"
+    integration:
+      available: true
+      command: "npm run test:integration"
+      config: "vitest.integration.config.ts"
+      include:
+        - "api/integration/**/*.integration.test.ts"
+    e2e:
+      available: false
+  coverage:
+    available: false
+    note: "@vitest/coverage-v8 and @vitest/coverage-istanbul are present in lockfile but not enabled in any script; coverage is opt-in per command."
+  quality:
+    linter:
+      available: true
+      command: "npm run lint"
+      tool: eslint
+      version: "^9.39.1"
+    type_checker:
+      available: true
+      command: "npm run check"
+      tool: typescript
+      version: "~5.9.3"
+    formatter:
+      available: true
+      command: "npm run format"
+      tool: prettier
+      version: "^3.7.4"
+
+context_sections:
+  - name: project
+    value: medvenezuela
+  - name: repo
+    value: /Users/gapfware/nextwrld/emergenciaMed
+  - name: artifact_store
+    value: openspec
