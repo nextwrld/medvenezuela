@@ -43,12 +43,16 @@ RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
 
 WORKDIR /app
 
-# Install production deps + drizzle-kit (needed for migrations at startup)
+# Install production deps from lockfile
 COPY app/package.json app/pnpm-lock.yaml ./
 ENV NODE_ENV=production
 RUN pnpm install --prod --frozen-lockfile
-# Add drizzle-kit locally as a devDep (it's only used for migrations, not runtime)
-RUN pnpm add -D drizzle-kit@0.31.10
+
+# Copy drizzle-kit (and its deps) from the builder's node_modules
+# drizzle-kit is a devDep we need only for migrations at startup
+COPY --from=builder /build/node_modules/drizzle-kit ./node_modules/drizzle-kit
+COPY --from=builder /build/node_modules/drizzle-orm ./node_modules/drizzle-orm
+COPY --from=builder /build/node_modules/.bin/drizzle-kit ./node_modules/.bin/drizzle-kit
 
 # Copy built artifacts
 COPY --from=builder /build/dist ./dist
@@ -67,4 +71,4 @@ ENV PORT=3000
 EXPOSE 3000
 
 # Run migrations then start the server
-CMD ["sh", "-c", "pnpm exec drizzle-kit migrate && node dist/boot.js"]
+CMD ["sh", "-c", "./node_modules/.bin/drizzle-kit migrate && node dist/boot.js"]
