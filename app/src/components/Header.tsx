@@ -68,15 +68,16 @@ export default function Header() {
                 </Button>
               </div>
             ) : (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate("/login")}
-                className="h-9 gap-1.5 border-zinc-300"
-              >
-                <LogIn className="w-4 h-4" />
-                Ingresar
-              </Button>
+              // <Button
+              //   variant="outline"
+              //   size="sm"
+              //   onClick={() => navigate("/login")}
+              //   className="h-9 gap-1.5 border-zinc-300"
+              // >
+              //   <LogIn className="w-4 h-4" />
+              //   Ingresar
+              // </Button>
+              <></>
             )}
           </div>
 
@@ -85,7 +86,11 @@ export default function Header() {
             className="sm:hidden p-2 text-zinc-600"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
-            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            {mobileMenuOpen ? (
+              <X className="w-5 h-5" />
+            ) : (
+              <Menu className="w-5 h-5" />
+            )}
           </button>
         </div>
 
@@ -122,17 +127,18 @@ export default function Header() {
                 </Button>
               </div>
             ) : (
-              <Button
-                variant="outline"
-                className="w-full gap-2 h-10 mt-2"
-                onClick={() => {
-                  navigate("/login");
-                  setMobileMenuOpen(false);
-                }}
-              >
-                <LogIn className="w-4 h-4" />
-                Ingresar
-              </Button>
+              // <Button
+              //   variant="outline"
+              //   className="w-full gap-2 h-10 mt-2"
+              //   onClick={() => {
+              //     navigate("/login");
+              //     setMobileMenuOpen(false);
+              //   }}
+              // >
+              //   <LogIn className="w-4 h-4" />
+              //   Ingresar
+              // </Button>
+              <></>
             )}
           </div>
         )}
