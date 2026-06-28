@@ -46,9 +46,12 @@ services:
       KIMI_AUTH_URL: ${KIMI_AUTH_URL:-https://placeholder.example.com}
       KIMI_OPEN_URL: ${KIMI_OPEN_URL:-https://placeholder.example.com}
       OWNER_UNION_ID: ${OWNER_UNION_ID:-}
+    ports:
+      - "3000:3000"
     networks:
       - internal
-    # Cloudflared connects here — no ports exposed to host
+    # Exposed to host so Cloudflare Tunnel can target the VPS directly if
+    # inter-container origin routing is unreliable.
 
   # ─── Cloudflare Tunnel (no open ports, SSL at edge) ────────────
   # Requires: CLOUDFLARE_TUNNEL_TOKEN env var
