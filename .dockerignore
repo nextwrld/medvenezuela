@@ -16,3 +16,5 @@ tsconfig*.json
 *.test.ts
 *.spec.ts
 package-lock.json
+pnpm-workspace.yaml
+**/pnpm-workspace.yaml

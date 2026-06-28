@@ -14,6 +14,7 @@ WORKDIR /build
 ENV NODE_ENV=development
 
 # Copy lockfile + manifests first for layer caching
+# pnpm-workspace.yaml is excluded — it was auto-generated and breaks pnpm run
 COPY app/package.json app/pnpm-lock.yaml ./
 
 # Install all deps via pnpm (matches the project)
