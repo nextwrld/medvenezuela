@@ -1,4 +1,5 @@
 import {
+  double,
   index,
   int,
   mysqlEnum,
@@ -90,6 +91,13 @@ export const solicitudes = mysqlTable("solicitudes", {
   // solicitud is still active or in progress.
   closedAt: timestamp("closedAt"),
   notas: text("notas"),
+  // Punto geográfico opcional del lugar de entrega/retiro. Nullable: muchas
+  // solicitudes no lo marcan (sin GPS/señal o es un hospital identificable
+  // por nombre). Se usan para el botón "Cómo llegar" y el mapa del feed.
+  // `double` devuelve un número JS directo (sin parseo) con precisión
+  // más que suficiente para coordenadas.
+  latitud: double("latitud"),
+  longitud: double("longitud"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt")
     .defaultNow()
@@ -121,6 +129,8 @@ export type PublicSolicitud = Pick<
   | "estatus"
   | "pinGestion"
   | "notas"
+  | "latitud"
+  | "longitud"
   | "createdAt"
   | "updatedAt"
 >;

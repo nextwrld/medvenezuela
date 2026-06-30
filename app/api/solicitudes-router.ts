@@ -53,6 +53,8 @@ const publicSolicitudSelect = {
   estatus: schema.solicitudes.estatus,
   pinGestion: schema.solicitudes.pinGestion,
   notas: schema.solicitudes.notas,
+  latitud: schema.solicitudes.latitud,
+  longitud: schema.solicitudes.longitud,
   createdAt: schema.solicitudes.createdAt,
   updatedAt: schema.solicitudes.updatedAt,
 };
