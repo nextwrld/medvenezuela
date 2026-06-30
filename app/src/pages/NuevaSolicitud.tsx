@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { useNavigate } from "react-router";
 import {
   ArrowLeft,
@@ -20,6 +20,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/providers/trpc";
 import Header from "@/components/Header";
 import { ESTADOS_VENEZUELA } from "@db/seed";
+import { coordsFromPosition, formatCoords } from "@/lib/geo";
+
+const UbicacionPicker = lazy(() => import("@/components/UbicacionPicker"));
 
 type FormData = {
   medicamento: string;
@@ -35,6 +38,8 @@ type FormData = {
   inicialesPaciente: string;
   urgencia: "critico" | "moderado" | "estable";
   notas: string;
+  latitud: number | null;
+  longitud: number | null;
 };
 
 const initialForm: FormData = {
@@ -51,6 +56,8 @@ const initialForm: FormData = {
   inicialesPaciente: "",
   urgencia: "moderado",
   notas: "",
+  latitud: null,
+  longitud: null,
 };
 
 export default function NuevaSolicitud() {
@@ -63,6 +70,32 @@ export default function NuevaSolicitud() {
   >(null);
   const [copiedPinCierre, setCopiedPinCierre] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [showMap, setShowMap] = useState(false);
+  const [geoError, setGeoError] = useState<string | null>(null);
+
+  const setCoords = (coords: { lat: number; lng: number } | null) => {
+    setForm((prev) => ({
+      ...prev,
+      latitud: coords ? coords.lat : null,
+      longitud: coords ? coords.lng : null,
+    }));
+  };
+
+  const handleUsarMiUbicacion = () => {
+    setGeoError(null);
+    if (!navigator.geolocation) {
+      setGeoError("Tu navegador no permite obtener la ubicación.");
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => setCoords(coordsFromPosition(pos)),
+      () =>
+        setGeoError(
+          "No se pudo obtener tu ubicación. Podés marcarla en el mapa.",
+        ),
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
+  };
 
   const createMutation = trpc.solicitudes.create.useMutation({
     onSuccess: (data) => {
@@ -113,6 +146,8 @@ export default function NuevaSolicitud() {
       inicialesPaciente: form.inicialesPaciente.trim() || undefined,
       urgencia: form.urgencia,
       notas: form.notas.trim() || undefined,
+      latitud: form.latitud ?? undefined,
+      longitud: form.longitud ?? undefined,
     });
   };
 
@@ -438,6 +473,79 @@ export default function NuevaSolicitud() {
                     <p className="text-xs text-red-500 mt-1">{errors.ciudad}</p>
                   )}
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-zinc-700 mb-1.5">
+                  Ubicación exacta{" "}
+                  <span className="text-zinc-400 font-normal">(opcional)</span>
+                </label>
+                <p className="text-xs text-zinc-500 mb-2">
+                  Ayuda a quien dona a llegar con una ruta más clara.
+                </p>
+
+                {form.latitud != null && form.longitud != null ? (
+                  <div className="flex items-center justify-between gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <span className="text-sm text-green-800">
+                      Ubicación marcada ✓{" "}
+                      <span className="font-mono text-xs text-green-700">
+                        {formatCoords(form.latitud, form.longitud)}
+                      </span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setCoords(null)}
+                      className="text-xs text-green-700 underline"
+                    >
+                      Quitar
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={handleUsarMiUbicacion}
+                      className="h-10 px-3 rounded-lg border border-zinc-300 text-sm bg-white"
+                    >
+                      📍 Usar mi ubicación
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowMap((s) => !s)}
+                      className="h-10 px-3 rounded-lg border border-zinc-300 text-sm bg-white"
+                    >
+                      {showMap ? "Ocultar mapa" : "Marcar en el mapa"}
+                    </button>
+                  </div>
+                )}
+
+                {geoError && (
+                  <p className="text-xs text-red-500 mt-1">{geoError}</p>
+                )}
+
+                {showMap && form.latitud == null && (
+                  <div className="mt-2">
+                    <Suspense
+                      fallback={
+                        <div className="h-64 w-full rounded-lg border border-zinc-200 flex items-center justify-center text-sm text-zinc-400">
+                          Cargando mapa…
+                        </div>
+                      }
+                    >
+                      <UbicacionPicker
+                        value={
+                          form.latitud != null && form.longitud != null
+                            ? { lat: form.latitud, lng: form.longitud }
+                            : null
+                        }
+                        onChange={(c) => {
+                          setCoords(c);
+                          setShowMap(false);
+                        }}
+                      />
+                    </Suspense>
+                  </div>
+                )}
               </div>
 
               <div>
