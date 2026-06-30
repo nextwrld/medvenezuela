@@ -160,6 +160,28 @@ describe("createSolicitud", () => {
     expect(inserted.pinCierre).toBe("000002");
   });
 
+  it("persists latitud/longitud on the insert payload when provided", async () => {
+    queueAttempt(1, 2);
+    valuesMock.mockResolvedValueOnce([{ insertId: 1 }]);
+
+    await createSolicitud({ ...baseInput, latitud: 10.491, longitud: -66.879 });
+
+    const inserted = valuesMock.mock.calls[0]?.[0];
+    expect(inserted.latitud).toBe(10.491);
+    expect(inserted.longitud).toBe(-66.879);
+  });
+
+  it("omits coordinates from the payload when not provided", async () => {
+    queueAttempt(1, 2);
+    valuesMock.mockResolvedValueOnce([{ insertId: 1 }]);
+
+    await createSolicitud(baseInput);
+
+    const inserted = valuesMock.mock.calls[0]?.[0];
+    expect(inserted.latitud).toBeUndefined();
+    expect(inserted.longitud).toBeUndefined();
+  });
+
   it("preserves caller-supplied urgencia when provided", async () => {
     queueAttempt(1, 2);
     valuesMock.mockResolvedValueOnce([{ insertId: 1 }]);
