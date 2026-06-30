@@ -48,6 +48,8 @@ export interface CreateSolicitudInput {
   inicialesPaciente?: string;
   urgencia?: "critico" | "moderado" | "estable";
   notas?: string;
+  latitud?: number;
+  longitud?: number;
 }
 
 // `CreateSolicitudResult` carries both credentials the closure-restricted

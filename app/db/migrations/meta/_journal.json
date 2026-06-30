@@ -15,6 +15,13 @@
       "when": 1782623978232,
       "tag": "0001_restricted_solicitud_closure",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1782844410319,
+      "tag": "0002_petite_nighthawk",
+      "breakpoints": true
     }
   ]
 }
