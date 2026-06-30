@@ -7,6 +7,7 @@ import {
   createSolicitud,
   PinCollisionError,
 } from "./queries/create-solicitud";
+import { createSolicitudInputSchema } from "./solicitudes-schemas";
 import {
   validateClosurePin,
   checkThrottle,
@@ -61,23 +62,7 @@ const publicSolicitudSelect = {
 
 export const solicitudesRouter = createRouter({
   create: publicQuery
-    .input(
-      z.object({
-        medicamento: z.string().min(1).max(255),
-        principioActivo: z.string().min(1).max(255),
-        cantidad: z.string().min(1).max(100),
-        dosis: z.string().max(100).optional(),
-        hospital: z.string().min(1).max(255),
-        estado: z.string().min(1).max(100),
-        ciudad: z.string().min(1).max(100),
-        telefono: z.string().min(1).max(50),
-        nombreSolicitante: z.string().min(1).max(255),
-        rolSolicitante: z.enum(["medico", "familiar", "personal_salud"]),
-        inicialesPaciente: z.string().max(50).optional(),
-        urgencia: z.enum(["critico", "moderado", "estable"]).optional(),
-        notas: z.string().optional(),
-      })
-    )
+    .input(createSolicitudInputSchema)
     .mutation(async ({ input }) => {
       try {
         const result = await createSolicitud(input);
