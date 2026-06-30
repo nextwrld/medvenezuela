@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import { useNavigate } from "react-router";
-import { Search, Activity, Package, SlidersHorizontal, X } from "lucide-react";
+import { Search, Activity, Package, SlidersHorizontal, X, Map as MapIcon, List as ListIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -8,6 +8,8 @@ import { trpc } from "@/providers/trpc";
 import Header from "@/components/Header";
 import SolicitudCard from "@/components/SolicitudCard";
 import { ESTADOS_VENEZUELA, ZONAS_EMERGENCIA } from "@db/seed";
+
+const MapaSolicitudes = lazy(() => import("@/components/MapaSolicitudes"));
 
 export default function Home() {
   const navigate = useNavigate();
@@ -17,6 +19,7 @@ export default function Home() {
   const [selectedUrgencia, setSelectedUrgencia] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [page, setPage] = useState(1);
+  const [view, setView] = useState<"lista" | "mapa">("lista");
 
   // Debounce search
   useEffect(() => {
@@ -36,6 +39,9 @@ export default function Home() {
   });
 
   const { data: stats } = trpc.solicitudes.stats.useQuery();
+
+  const { data: mapPoints, isLoading: mapLoading } =
+    trpc.solicitudes.mapPoints.useQuery(undefined, { enabled: view === "mapa" });
 
   const clearFilters = useCallback(() => {
     setSearch("");
@@ -292,112 +298,168 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Results count */}
-        {!isLoading && data && (
-          <div className="mb-4">
-            <p className="text-sm text-zinc-500">
-              {data.total} solicitud{data.total !== 1 ? "es" : ""} encontrada
-              {data.total !== 1 ? "s" : ""}
-              {data.totalPages > 1 && (
-                <span className="text-zinc-400">
-                  {" "}
-                  · Página {page} de {data.totalPages}
-                </span>
-              )}
-            </p>
-          </div>
-        )}
+        {/* Lista / Mapa toggle */}
+        <div className="mb-4 inline-flex rounded-lg border border-zinc-300 bg-white p-0.5">
+          <button
+            type="button"
+            onClick={() => setView("lista")}
+            className={`flex items-center gap-1.5 px-3 h-9 rounded-md text-sm ${
+              view === "lista" ? "bg-zinc-900 text-white" : "text-zinc-600"
+            }`}
+          >
+            <ListIcon className="w-4 h-4" /> Lista
+          </button>
+          <button
+            type="button"
+            onClick={() => setView("mapa")}
+            className={`flex items-center gap-1.5 px-3 h-9 rounded-md text-sm ${
+              view === "mapa" ? "bg-zinc-900 text-white" : "text-zinc-600"
+            }`}
+          >
+            <MapIcon className="w-4 h-4" /> Mapa
+          </button>
+        </div>
 
-        {/* Loading skeleton */}
-        {isLoading && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div
-                key={i}
-                className="bg-white rounded-xl border border-zinc-200 p-4 space-y-3"
-              >
-                <div className="flex gap-2">
-                  <Skeleton className="h-5 w-20 rounded-full" />
-                  <Skeleton className="h-5 w-16 rounded-full" />
-                </div>
-                <Skeleton className="h-5 w-3/4" />
-                <Skeleton className="h-4 w-1/2" />
-                <div className="space-y-2 pt-2">
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-2/3" />
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Solicitudes grid */}
-        {!isLoading && data && data.items.length > 0 && (
+        {view === "lista" && (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {data.items.map((solicitud) => (
-                <SolicitudCard key={solicitud.id} solicitud={solicitud} />
-              ))}
-            </div>
+            {/* Results count */}
+            {!isLoading && data && (
+              <div className="mb-4">
+                <p className="text-sm text-zinc-500">
+                  {data.total} solicitud{data.total !== 1 ? "es" : ""} encontrada
+                  {data.total !== 1 ? "s" : ""}
+                  {data.totalPages > 1 && (
+                    <span className="text-zinc-400">
+                      {" "}
+                      · Página {page} de {data.totalPages}
+                    </span>
+                  )}
+                </p>
+              </div>
+            )}
 
-            {/* Pagination */}
-            {data.totalPages > 1 && (
-              <div className="flex justify-center gap-2 mt-8">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={page === 1}
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  className="border-zinc-300"
-                >
-                  Anterior
-                </Button>
-                <span className="flex items-center px-3 text-sm text-zinc-500">
-                  {page} / {data.totalPages}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={page === data.totalPages}
-                  onClick={() => setPage((p) => Math.min(data.totalPages, p + 1))}
-                  className="border-zinc-300"
-                >
-                  Siguiente
-                </Button>
+            {/* Loading skeleton */}
+            {isLoading && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="bg-white rounded-xl border border-zinc-200 p-4 space-y-3"
+                  >
+                    <div className="flex gap-2">
+                      <Skeleton className="h-5 w-20 rounded-full" />
+                      <Skeleton className="h-5 w-16 rounded-full" />
+                    </div>
+                    <Skeleton className="h-5 w-3/4" />
+                    <Skeleton className="h-4 w-1/2" />
+                    <div className="space-y-2 pt-2">
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-2/3" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Solicitudes grid */}
+            {!isLoading && data && data.items.length > 0 && (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {data.items.map((solicitud) => (
+                    <SolicitudCard key={solicitud.id} solicitud={solicitud} />
+                  ))}
+                </div>
+
+                {/* Pagination */}
+                {data.totalPages > 1 && (
+                  <div className="flex justify-center gap-2 mt-8">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={page === 1}
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                      className="border-zinc-300"
+                    >
+                      Anterior
+                    </Button>
+                    <span className="flex items-center px-3 text-sm text-zinc-500">
+                      {page} / {data.totalPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={page === data.totalPages}
+                      onClick={() => setPage((p) => Math.min(data.totalPages, p + 1))}
+                      className="border-zinc-300"
+                    >
+                      Siguiente
+                    </Button>
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* Empty state */}
+            {!isLoading && data && data.items.length === 0 && (
+              <div className="text-center py-16">
+                <div className="w-16 h-16 bg-zinc-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Activity className="w-8 h-8 text-zinc-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-zinc-700 mb-2">
+                  No hay solicitudes activas
+                </h3>
+                <p className="text-sm text-zinc-500 mb-6 max-w-sm mx-auto">
+                  {hasFilters
+                    ? "No se encontraron resultados con los filtros aplicados. Intenta con otros criterios."
+                    : "Sé el primero en crear una solicitud de medicamento."}
+                </p>
+                {hasFilters ? (
+                  <Button
+                    variant="outline"
+                    onClick={clearFilters}
+                    className="border-zinc-300"
+                  >
+                    Limpiar filtros
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={() => (window.location.href = "/solicitar")}
+                    className="bg-red-600 hover:bg-red-700 text-white"
+                  >
+                    Crear solicitud
+                  </Button>
+                )}
               </div>
             )}
           </>
         )}
 
-        {/* Empty state */}
-        {!isLoading && data && data.items.length === 0 && (
-          <div className="text-center py-16">
-            <div className="w-16 h-16 bg-zinc-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Activity className="w-8 h-8 text-zinc-400" />
-            </div>
-            <h3 className="text-lg font-semibold text-zinc-700 mb-2">
-              No hay solicitudes activas
-            </h3>
-            <p className="text-sm text-zinc-500 mb-6 max-w-sm mx-auto">
-              {hasFilters
-                ? "No se encontraron resultados con los filtros aplicados. Intenta con otros criterios."
-                : "Sé el primero en crear una solicitud de medicamento."}
-            </p>
-            {hasFilters ? (
-              <Button
-                variant="outline"
-                onClick={clearFilters}
-                className="border-zinc-300"
-              >
-                Limpiar filtros
-              </Button>
+        {view === "mapa" && (
+          <div>
+            {mapLoading ? (
+              <div className="h-[60vh] w-full rounded-2xl border border-zinc-200 flex items-center justify-center text-sm text-zinc-400">
+                Cargando mapa…
+              </div>
+            ) : (mapPoints?.length ?? 0) === 0 ? (
+              <div className="h-[60vh] w-full rounded-2xl border border-zinc-200 flex items-center justify-center text-sm text-zinc-400 text-center px-6">
+                Aún no hay solicitudes con ubicación marcada.
+              </div>
             ) : (
-              <Button
-                onClick={() => (window.location.href = "/solicitar")}
-                className="bg-red-600 hover:bg-red-700 text-white"
+              <Suspense
+                fallback={
+                  <div className="h-[60vh] w-full rounded-2xl border border-zinc-200 flex items-center justify-center text-sm text-zinc-400">
+                    Cargando mapa…
+                  </div>
+                }
               >
-                Crear solicitud
-              </Button>
+                <MapaSolicitudes
+                  points={(mapPoints ?? []).filter(
+                    (p): p is typeof p & { latitud: number; longitud: number } =>
+                      p.latitud !== null && p.longitud !== null,
+                  )}
+                  onSelect={(id) => navigate(`/solicitud/${id}`)}
+                />
+              </Suspense>
             )}
           </div>
         )}
