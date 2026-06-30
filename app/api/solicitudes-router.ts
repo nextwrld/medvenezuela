@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { eq, and, like, or, desc, count } from "drizzle-orm";
+import { eq, and, like, or, desc, count, isNotNull } from "drizzle-orm";
 import { createRouter, publicQuery, adminQuery } from "./middleware";
 import { getDb } from "./queries/connection";
 import {
@@ -58,6 +58,16 @@ const publicSolicitudSelect = {
   longitud: schema.solicitudes.longitud,
   createdAt: schema.solicitudes.createdAt,
   updatedAt: schema.solicitudes.updatedAt,
+};
+
+// Proyección mínima para el mapa del feed. Solo lo que un marcador necesita;
+// nunca incluye credenciales (pinGestion/pinCierre) ni datos de contacto.
+export const mapPointSelect = {
+  id: schema.solicitudes.id,
+  latitud: schema.solicitudes.latitud,
+  longitud: schema.solicitudes.longitud,
+  urgencia: schema.solicitudes.urgencia,
+  medicamento: schema.solicitudes.medicamento,
 };
 
 export const solicitudesRouter = createRouter({
@@ -391,5 +401,24 @@ export const solicitudesRouter = createRouter({
       enProceso: enProcesoResult[0]?.count ?? 0,
       recibidos: recibidosResult[0]?.count ?? 0,
     };
+  }),
+
+  // Puntos para el mapa del feed: todas las solicitudes activas / en proceso
+  // que tienen coordenadas. Sin paginar (payload chico) y sin datos sensibles.
+  mapPoints: publicQuery.query(async () => {
+    const db = getDb();
+    return db
+      .select(mapPointSelect)
+      .from(schema.solicitudes)
+      .where(
+        and(
+          isNotNull(schema.solicitudes.latitud),
+          isNotNull(schema.solicitudes.longitud),
+          or(
+            eq(schema.solicitudes.estatus, "activo"),
+            eq(schema.solicitudes.estatus, "en_proceso"),
+          ),
+        ),
+      );
   }),
 });
