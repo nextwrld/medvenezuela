@@ -22,6 +22,8 @@ export default defineConfig({
       "api/**/*.spec.ts",
       "scripts/**/*.test.ts",
       "scripts/**/*.test.mjs",
+      "src/**/*.test.ts",
+      "src/**/*.spec.ts",
     ],
   },
 });
