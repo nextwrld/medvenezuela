@@ -28,6 +28,8 @@ import UrgencyBadge from "@/components/UrgencyBadge";
 import StatusBadge from "@/components/StatusBadge";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import ShareButton from "@/components/ShareButton";
+import UbicacionDetalle from "@/components/UbicacionDetalle";
+import { buildDirectionsUrl } from "@/lib/geo";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState } from "react";
 
@@ -409,7 +411,15 @@ export default function DetalleSolicitud() {
             <div className="pt-4 border-t border-zinc-100 space-y-3">
               <WhatsAppButton
                 phone={solicitud.telefono}
-                message={`Hola ${solicitud.nombreSolicitante}, vi tu solicitud en MedVene para ${solicitud.medicamento} (${solicitud.principioActivo}) en ${solicitud.hospital}. Quiero ayudar. ¿Aún lo necesitas?`}
+                message={
+                  `Hola ${solicitud.nombreSolicitante}, vi tu solicitud en MedVene para ${solicitud.medicamento} (${solicitud.principioActivo}) en ${solicitud.hospital}. Quiero ayudar. ¿Aún lo necesitas?` +
+                  (solicitud.latitud != null && solicitud.longitud != null
+                    ? `\nUbicación: ${buildDirectionsUrl(
+                        solicitud.latitud,
+                        solicitud.longitud,
+                      )}`
+                    : "")
+                }
                 size="md"
               />
               <ShareButton
@@ -418,6 +428,12 @@ export default function DetalleSolicitud() {
                 text={shareText}
                 phone={solicitud.telefono}
               />
+              {solicitud.latitud != null && solicitud.longitud != null && (
+                <UbicacionDetalle
+                  lat={solicitud.latitud}
+                  lng={solicitud.longitud}
+                />
+              )}
             </div>
 
             {/* ── Inline status management ── */}
