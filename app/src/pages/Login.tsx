@@ -31,7 +31,7 @@ export default function Login() {
   const [error, setError] = useState("");
 
   const loginMutation = trpc.localAuth.login.useMutation({
-    onSuccess: (data) => {
+    onSuccess: data => {
       if (data.success && data.token) {
         localStorage.setItem("local_auth_token", data.token);
         window.location.href = "/";
@@ -42,7 +42,7 @@ export default function Login() {
   });
 
   const registerMutation = trpc.localAuth.register.useMutation({
-    onSuccess: (data) => {
+    onSuccess: data => {
       if (data.success && data.token) {
         localStorage.setItem("local_auth_token", data.token);
         window.location.href = "/";
@@ -103,7 +103,7 @@ export default function Login() {
             <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center mx-auto mb-3">
               <span className="text-red-700 font-bold text-lg">M</span>
             </div>
-            <h1 className="text-lg font-bold text-zinc-900">MedVene</h1>
+            <h1 className="text-lg font-bold text-zinc-900">MedVenezuela</h1>
             <p className="text-sm text-zinc-500 mt-1">
               {mode === "login"
                 ? "Ingresa para gestionar solicitudes"
@@ -161,7 +161,7 @@ export default function Login() {
                   </label>
                   <Input
                     value={displayName}
-                    onChange={(e) => setDisplayName(e.target.value)}
+                    onChange={e => setDisplayName(e.target.value)}
                     placeholder="Dr. Juan Pérez"
                     className="h-12"
                   />
@@ -174,7 +174,7 @@ export default function Login() {
                 </label>
                 <Input
                   value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  onChange={e => setUsername(e.target.value)}
                   placeholder="usuario123"
                   className="h-12"
                   autoComplete="username"
@@ -188,10 +188,12 @@ export default function Login() {
                 <Input
                   type="password"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={e => setPassword(e.target.value)}
                   placeholder="••••••"
                   className="h-12"
-                  autoComplete={mode === "login" ? "current-password" : "new-password"}
+                  autoComplete={
+                    mode === "login" ? "current-password" : "new-password"
+                  }
                 />
               </div>
 

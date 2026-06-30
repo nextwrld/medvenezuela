@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router";
-import { Plus, LogIn, LogOut, Shield, User, Menu, X } from "lucide-react";
+import { Plus, LogOut, Shield, User, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
@@ -20,7 +20,7 @@ export default function Header() {
             </div>
             <div className="flex flex-col leading-tight">
               <span className="text-red-700 font-bold text-base tracking-tight">
-                MedVene
+                MedVenezuela
               </span>
               <span className="text-zinc-400 text-[10px] hidden sm:block -mt-0.5">
                 Ayuda Médica Venezuela

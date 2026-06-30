@@ -60,7 +60,9 @@ export default function SolicitudCard({ solicitud }: SolicitudCardProps) {
         <h3 className="font-semibold text-zinc-900 text-base mb-1">
           {solicitud.medicamento}
         </h3>
-        <p className="text-sm text-zinc-500 mb-3">{solicitud.principioActivo}</p>
+        <p className="text-sm text-zinc-500 mb-3">
+          {solicitud.principioActivo}
+        </p>
 
         {/* Details */}
         <div className="space-y-1.5 mb-4">
@@ -86,11 +88,11 @@ export default function SolicitudCard({ solicitud }: SolicitudCardProps) {
         {/* Actions */}
         <div
           className="flex items-center gap-2 pt-3 border-t border-zinc-100"
-          onClick={(e) => e.stopPropagation()}
+          onClick={e => e.stopPropagation()}
         >
           <WhatsAppButton
             phone={solicitud.telefono}
-            message={`Hola ${solicitud.nombreSolicitante}, vi tu solicitud en MedVene para ${solicitud.medicamento} (${solicitud.principioActivo}). Quiero ayudar. ¿Aún lo necesitas?`}
+            message={`Hola ${solicitud.nombreSolicitante}, vi tu solicitud en MedVenezuela para ${solicitud.medicamento} (${solicitud.principioActivo}). Quiero ayudar. ¿Aún lo necesitas?`}
           />
           <ShareButton
             url={`/solicitud/${solicitud.id}`}

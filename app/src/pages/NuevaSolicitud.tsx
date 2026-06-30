@@ -63,18 +63,22 @@ const initialForm: FormData = {
 export default function NuevaSolicitud() {
   const navigate = useNavigate();
   const [form, setForm] = useState<FormData>(initialForm);
-  const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
+  const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>(
+    {}
+  );
   const [submitted, setSubmitted] = useState(false);
-  const [result, setResult] = useState<
-    { id: number; pinGestion: string; pinCierre: string } | null
-  >(null);
+  const [result, setResult] = useState<{
+    id: number;
+    pinGestion: string;
+    pinCierre: string;
+  } | null>(null);
   const [copiedPinCierre, setCopiedPinCierre] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [showMap, setShowMap] = useState(false);
   const [geoError, setGeoError] = useState<string | null>(null);
 
   const setCoords = (coords: { lat: number; lng: number } | null) => {
-    setForm((prev) => ({
+    setForm(prev => ({
       ...prev,
       latitud: coords ? coords.lat : null,
       longitud: coords ? coords.lng : null,
@@ -88,17 +92,17 @@ export default function NuevaSolicitud() {
       return;
     }
     navigator.geolocation.getCurrentPosition(
-      (pos) => setCoords(coordsFromPosition(pos)),
+      pos => setCoords(coordsFromPosition(pos)),
       () =>
         setGeoError(
-          "No se pudo obtener tu ubicación. Podés marcarla en el mapa.",
+          "No se pudo obtener tu ubicación. Podés marcarla en el mapa."
         ),
-      { enableHighAccuracy: true, timeout: 10000 },
+      { enableHighAccuracy: true, timeout: 10000 }
     );
   };
 
   const createMutation = trpc.solicitudes.create.useMutation({
-    onSuccess: (data) => {
+    onSuccess: data => {
       setResult(data);
       setSubmitted(true);
     },
@@ -108,7 +112,8 @@ export default function NuevaSolicitud() {
     const newErrors: Partial<Record<keyof FormData, string>> = {};
 
     if (!form.medicamento.trim()) newErrors.medicamento = "Campo requerido";
-    if (!form.principioActivo.trim()) newErrors.principioActivo = "Campo requerido";
+    if (!form.principioActivo.trim())
+      newErrors.principioActivo = "Campo requerido";
     if (!form.cantidad.trim()) newErrors.cantidad = "Campo requerido";
     if (!form.hospital.trim()) newErrors.hospital = "Campo requerido";
     if (!form.estado) newErrors.estado = "Selecciona un estado";
@@ -142,7 +147,8 @@ export default function NuevaSolicitud() {
       ciudad: form.ciudad.trim(),
       telefono: form.telefono.trim(),
       nombreSolicitante: form.nombreSolicitante.trim(),
-      rolSolicitante: form.rolSolicitante as "medico" | "familiar" | "personal_salud",
+      rolSolicitante: form.rolSolicitante as
+        "medico" | "familiar" | "personal_salud",
       inicialesPaciente: form.inicialesPaciente.trim() || undefined,
       urgencia: form.urgencia,
       notas: form.notas.trim() || undefined,
@@ -152,9 +158,9 @@ export default function NuevaSolicitud() {
   };
 
   const updateField = (field: keyof FormData, value: string) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
+    setForm(prev => ({ ...prev, [field]: value }));
     if (errors[field]) {
-      setErrors((prev) => {
+      setErrors(prev => {
         const next = { ...prev };
         delete next[field];
         return next;
@@ -162,10 +168,7 @@ export default function NuevaSolicitud() {
     }
   };
 
-  const copyToClipboard = async (
-    text: string,
-    type: "pin-cierre" | "link"
-  ) => {
+  const copyToClipboard = async (text: string, type: "pin-cierre" | "link") => {
     try {
       await navigator.clipboard.writeText(text);
       if (type === "pin-cierre") {
@@ -196,7 +199,7 @@ export default function NuevaSolicitud() {
   if (submitted && result) {
     const link = `${window.location.origin}/solicitud/${result.id}`;
     const waMessage = encodeURIComponent(
-      `🚨 Solicitud de medicamento en MedVene\n\nSe necesita: ${form.medicamento}\nPrincipio activo: ${form.principioActivo}\nCantidad: ${form.cantidad}\nHospital: ${form.hospital}\nCiudad: ${form.ciudad}, ${form.estado}\nContacto: ${form.telefono}\n\nVer solicitud: ${link}`
+      `🚨 Solicitud de medicamento en MedVenezuela\n\nSe necesita: ${form.medicamento}\nPrincipio activo: ${form.principioActivo}\nCantidad: ${form.cantidad}\nHospital: ${form.hospital}\nCiudad: ${form.ciudad}, ${form.estado}\nContacto: ${form.telefono}\n\nVer solicitud: ${link}`
     );
 
     return (
@@ -212,40 +215,40 @@ export default function NuevaSolicitud() {
               Solicitud publicada
             </h1>
             <p className="text-sm text-zinc-500 mb-6">
-              Tu solicitud está ahora visible en el feed público. Compártela para
-              llegar a más donantes.
+              Tu solicitud está ahora visible en el feed público. Compártela
+              para llegar a más donantes.
             </p>
 
             {/* PIN de cierre — único código que el usuario necesita
                 guardar. El estado se gestiona directamente desde la
                 página de detalle sin necesidad del PIN de gestión. */}
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
-                <p className="text-xs font-medium text-amber-700 uppercase tracking-wide mb-2">
-                  PIN de cierre (guárdalo — no lo compartas)
-                </p>
-                <div className="flex items-center justify-center gap-3">
-                  <span className="text-3xl font-bold text-amber-800 tracking-widest font-mono">
-                    {result.pinCierre}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      copyToClipboard(result.pinCierre, "pin-cierre")
-                    }
-                    className="border-amber-300 text-amber-700 hover:bg-amber-100"
-                  >
-                    {copiedPinCierre ? (
-                      <Check className="w-4 h-4" />
-                    ) : (
-                      <Copy className="w-4 h-4" />
-                    )}
-                  </Button>
-                </div>
-                <p className="text-xs text-amber-600 mt-2">
-                  Usa el PIN de cierre para marcar como recibido
-                </p>
+              <p className="text-xs font-medium text-amber-700 uppercase tracking-wide mb-2">
+                PIN de cierre (guárdalo — no lo compartas)
+              </p>
+              <div className="flex items-center justify-center gap-3">
+                <span className="text-3xl font-bold text-amber-800 tracking-widest font-mono">
+                  {result.pinCierre}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    copyToClipboard(result.pinCierre, "pin-cierre")
+                  }
+                  className="border-amber-300 text-amber-700 hover:bg-amber-100"
+                >
+                  {copiedPinCierre ? (
+                    <Check className="w-4 h-4" />
+                  ) : (
+                    <Copy className="w-4 h-4" />
+                  )}
+                </Button>
               </div>
+              <p className="text-xs text-amber-600 mt-2">
+                Usa el PIN de cierre para marcar como recibido
+              </p>
+            </div>
 
             {/* Link */}
             <div className="bg-zinc-50 rounded-xl border border-zinc-200 p-4 mb-6">
@@ -354,12 +357,14 @@ export default function NuevaSolicitud() {
                 </label>
                 <Input
                   value={form.medicamento}
-                  onChange={(e) => updateField("medicamento", e.target.value)}
+                  onChange={e => updateField("medicamento", e.target.value)}
                   placeholder="Ej: Paracetamol, Ibuprofeno, Morfina..."
                   className={`h-12 ${errors.medicamento ? "border-red-300" : ""}`}
                 />
                 {errors.medicamento && (
-                  <p className="text-xs text-red-500 mt-1">{errors.medicamento}</p>
+                  <p className="text-xs text-red-500 mt-1">
+                    {errors.medicamento}
+                  </p>
                 )}
               </div>
 
@@ -369,7 +374,7 @@ export default function NuevaSolicitud() {
                 </label>
                 <Input
                   value={form.principioActivo}
-                  onChange={(e) => updateField("principioActivo", e.target.value)}
+                  onChange={e => updateField("principioActivo", e.target.value)}
                   placeholder="Ej: Acetaminofén, Ibuprofeno..."
                   className={`h-12 ${errors.principioActivo ? "border-red-300" : ""}`}
                 />
@@ -387,12 +392,14 @@ export default function NuevaSolicitud() {
                   </label>
                   <Input
                     value={form.cantidad}
-                    onChange={(e) => updateField("cantidad", e.target.value)}
+                    onChange={e => updateField("cantidad", e.target.value)}
                     placeholder="Ej: 10 cajas"
                     className={`h-12 ${errors.cantidad ? "border-red-300" : ""}`}
                   />
                   {errors.cantidad && (
-                    <p className="text-xs text-red-500 mt-1">{errors.cantidad}</p>
+                    <p className="text-xs text-red-500 mt-1">
+                      {errors.cantidad}
+                    </p>
                   )}
                 </div>
                 <div>
@@ -401,7 +408,7 @@ export default function NuevaSolicitud() {
                   </label>
                   <Input
                     value={form.dosis}
-                    onChange={(e) => updateField("dosis", e.target.value)}
+                    onChange={e => updateField("dosis", e.target.value)}
                     placeholder="Ej: 500mg"
                     className="h-12"
                   />
@@ -427,7 +434,7 @@ export default function NuevaSolicitud() {
                 </label>
                 <Input
                   value={form.hospital}
-                  onChange={(e) => updateField("hospital", e.target.value)}
+                  onChange={e => updateField("hospital", e.target.value)}
                   placeholder="Ej: Hospital Vargas de Caracas"
                   className={`h-12 ${errors.hospital ? "border-red-300" : ""}`}
                 />
@@ -443,13 +450,13 @@ export default function NuevaSolicitud() {
                   </label>
                   <select
                     value={form.estado}
-                    onChange={(e) => updateField("estado", e.target.value)}
+                    onChange={e => updateField("estado", e.target.value)}
                     className={`w-full h-12 px-3 rounded-lg border bg-white text-sm ${
                       errors.estado ? "border-red-300" : "border-zinc-300"
                     }`}
                   >
                     <option value="">Seleccionar...</option>
-                    {ESTADOS_VENEZUELA.map((e) => (
+                    {ESTADOS_VENEZUELA.map(e => (
                       <option key={e} value={e}>
                         {e}
                       </option>
@@ -465,7 +472,7 @@ export default function NuevaSolicitud() {
                   </label>
                   <Input
                     value={form.ciudad}
-                    onChange={(e) => updateField("ciudad", e.target.value)}
+                    onChange={e => updateField("ciudad", e.target.value)}
                     placeholder="Ej: Caracas"
                     className={`h-12 ${errors.ciudad ? "border-red-300" : ""}`}
                   />
@@ -511,7 +518,7 @@ export default function NuevaSolicitud() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => setShowMap((s) => !s)}
+                      onClick={() => setShowMap(s => !s)}
                       className="h-10 px-3 rounded-lg border border-zinc-300 text-sm bg-white"
                     >
                       {showMap ? "Ocultar mapa" : "Marcar en el mapa"}
@@ -538,7 +545,7 @@ export default function NuevaSolicitud() {
                             ? { lat: form.latitud, lng: form.longitud }
                             : null
                         }
-                        onChange={(c) => {
+                        onChange={c => {
                           setCoords(c);
                           setShowMap(false);
                         }}
@@ -556,7 +563,7 @@ export default function NuevaSolicitud() {
                   <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
                   <Input
                     value={form.telefono}
-                    onChange={(e) => updateField("telefono", e.target.value)}
+                    onChange={e => updateField("telefono", e.target.value)}
                     placeholder="0412-1234567"
                     className={`h-12 pl-10 ${errors.telefono ? "border-red-300" : ""}`}
                     type="tel"
@@ -589,7 +596,7 @@ export default function NuevaSolicitud() {
                   </label>
                   <Input
                     value={form.nombreSolicitante}
-                    onChange={(e) =>
+                    onChange={e =>
                       updateField("nombreSolicitante", e.target.value)
                     }
                     placeholder="Dr. Juan Pérez"
@@ -609,11 +616,13 @@ export default function NuevaSolicitud() {
                   </label>
                   <select
                     value={form.rolSolicitante}
-                    onChange={(e) =>
+                    onChange={e =>
                       updateField("rolSolicitante", e.target.value)
                     }
                     className={`w-full h-12 px-3 rounded-lg border bg-white text-sm ${
-                      errors.rolSolicitante ? "border-red-300" : "border-zinc-300"
+                      errors.rolSolicitante
+                        ? "border-red-300"
+                        : "border-zinc-300"
                     }`}
                   >
                     <option value="">Seleccionar...</option>
@@ -635,7 +644,7 @@ export default function NuevaSolicitud() {
                 </label>
                 <Input
                   value={form.inicialesPaciente}
-                  onChange={(e) =>
+                  onChange={e =>
                     updateField("inicialesPaciente", e.target.value)
                   }
                   placeholder="Ej: J.P."
@@ -680,7 +689,7 @@ export default function NuevaSolicitud() {
                         "border-green-300 bg-green-50 text-green-700 has-[:checked]:bg-green-600 has-[:checked]:text-white has-[:checked]:border-green-600",
                     },
                   ] as const
-                ).map((option) => (
+                ).map(option => (
                   <label
                     key={option.value}
                     className={`cursor-pointer rounded-xl border-2 p-3 text-center transition-all ${option.className}`}
@@ -694,7 +703,9 @@ export default function NuevaSolicitud() {
                       className="sr-only"
                     />
                     <p className="font-semibold text-sm">{option.label}</p>
-                    <p className="text-[11px] mt-0.5 opacity-80">{option.desc}</p>
+                    <p className="text-[11px] mt-0.5 opacity-80">
+                      {option.desc}
+                    </p>
                   </label>
                 ))}
               </div>
@@ -713,7 +724,7 @@ export default function NuevaSolicitud() {
 
               <Textarea
                 value={form.notas}
-                onChange={(e) => updateField("notas", e.target.value)}
+                onChange={e => updateField("notas", e.target.value)}
                 placeholder="Información adicional relevante..."
                 rows={3}
                 className="resize-none"
