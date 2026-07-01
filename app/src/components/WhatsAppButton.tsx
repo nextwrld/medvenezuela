@@ -17,7 +17,7 @@ export default function WhatsAppButton({
   const cleanPhone = phone.replace(/\D/g, "").replace(/^0/, "");
   const defaultMessage =
     message ||
-    "Hola, vi tu solicitud en MedVene. Quiero ayudar con el medicamento que necesitas.";
+    "Hola, vi tu solicitud en MedVenezuela. Quiero ayudar con el medicamento que necesitas.";
   const waUrl = `https://wa.me/58${cleanPhone}?text=${encodeURIComponent(defaultMessage)}`;
 
   const sizeClasses = size === "md" ? "h-11 px-4 text-sm" : "h-9 px-3 text-xs";

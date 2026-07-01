@@ -79,7 +79,7 @@ export default function DetalleSolicitud() {
   const [updateError, setUpdateError] = useState<string | null>(null);
 
   const updateMutation = trpc.solicitudes.updateStatus.useMutation({
-    onSuccess: (data) => {
+    onSuccess: data => {
       if (data.success) {
         setUpdateSuccess(true);
         setClosurePin("");
@@ -91,7 +91,7 @@ export default function DetalleSolicitud() {
         setUpdateError(data.error ?? "Error al actualizar");
       }
     },
-    onError: (err) => {
+    onError: err => {
       setUpdateError(err.message);
     },
   });
@@ -147,7 +147,7 @@ export default function DetalleSolicitud() {
   useEffect(() => {
     if (!solicitud) return;
 
-    const title = `Se necesita ${solicitud.medicamento} - ${solicitud.hospital} | MedVene`;
+    const title = `Se necesita ${solicitud.medicamento} - ${solicitud.hospital} | MedVenezuela`;
     const description = `${solicitud.cantidad} de ${solicitud.principioActivo} para ${solicitud.hospital} en ${solicitud.ciudad}, ${solicitud.estado}. Contacto: ${solicitud.telefono}. Urgencia: ${solicitud.urgencia}.`;
 
     document.title = title;
@@ -175,21 +175,15 @@ export default function DetalleSolicitud() {
     setMeta("og:title", title);
     setMeta("og:description", description);
     setMeta("og:type", "website");
-    setMeta(
-      "og:url",
-      `${window.location.origin}/solicitud/${solicitud.id}`
-    );
+    setMeta("og:url", `${window.location.origin}/solicitud/${solicitud.id}`);
     setName("twitter:card", "summary_large_image");
     setName("twitter:title", title);
     setName("twitter:description", description);
-    setName(
-      "description",
-      description
-    );
+    setName("description", description);
 
     return () => {
       // Reset meta on unmount
-      document.title = "MedVene | Ayuda Médica Venezuela";
+      document.title = "MedVenezuela | Ayuda Médica Venezuela";
     };
   }, [solicitud]);
 
@@ -267,8 +261,8 @@ export default function DetalleSolicitud() {
               solicitud.urgencia === "critico"
                 ? "bg-red-50 border-b border-red-100"
                 : solicitud.urgencia === "moderado"
-                ? "bg-orange-50 border-b border-orange-100"
-                : "bg-green-50 border-b border-green-100"
+                  ? "bg-orange-50 border-b border-orange-100"
+                  : "bg-green-50 border-b border-green-100"
             }`}
           >
             <div className="flex items-center gap-3">
@@ -277,8 +271,8 @@ export default function DetalleSolicitud() {
                   solicitud.urgencia === "critico"
                     ? "bg-red-100"
                     : solicitud.urgencia === "moderado"
-                    ? "bg-orange-100"
-                    : "bg-green-100"
+                      ? "bg-orange-100"
+                      : "bg-green-100"
                 }`}
               >
                 <UrgencyIcon
@@ -286,8 +280,8 @@ export default function DetalleSolicitud() {
                     solicitud.urgencia === "critico"
                       ? "text-red-600"
                       : solicitud.urgencia === "moderado"
-                      ? "text-orange-600"
-                      : "text-green-600"
+                        ? "text-orange-600"
+                        : "text-green-600"
                   }`}
                 />
               </div>
@@ -401,9 +395,7 @@ export default function DetalleSolicitud() {
             {solicitud.inicialesPaciente && (
               <div className="flex items-center gap-2 text-sm text-zinc-400">
                 <Shield className="w-4 h-4" />
-                <span>
-                  Paciente: {solicitud.inicialesPaciente}
-                </span>
+                <span>Paciente: {solicitud.inicialesPaciente}</span>
               </div>
             )}
 
@@ -412,11 +404,11 @@ export default function DetalleSolicitud() {
               <WhatsAppButton
                 phone={solicitud.telefono}
                 message={
-                  `Hola ${solicitud.nombreSolicitante}, vi tu solicitud en MedVene para ${solicitud.medicamento} (${solicitud.principioActivo}) en ${solicitud.hospital}. Quiero ayudar. ¿Aún lo necesitas?` +
+                  `Hola ${solicitud.nombreSolicitante}, vi tu solicitud en MedVenezuela para ${solicitud.medicamento} (${solicitud.principioActivo}) en ${solicitud.hospital}. Quiero ayudar. ¿Aún lo necesitas?` +
                   (solicitud.latitud != null && solicitud.longitud != null
                     ? `\nUbicación: ${buildDirectionsUrl(
                         solicitud.latitud,
-                        solicitud.longitud,
+                        solicitud.longitud
                       )}`
                     : "")
                 }
@@ -485,7 +477,7 @@ export default function DetalleSolicitud() {
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
                   <Input
                     value={closurePin}
-                    onChange={(e) =>
+                    onChange={e =>
                       setClosurePin(e.target.value.replace(/\D/g, ""))
                     }
                     placeholder="PIN de cierre (6 dígitos)"
@@ -495,16 +487,14 @@ export default function DetalleSolicitud() {
                 </div>
                 <Textarea
                   value={closureNotas}
-                  onChange={(e) => setClosureNotas(e.target.value)}
+                  onChange={e => setClosureNotas(e.target.value)}
                   placeholder="Notas de entrega (opcional)"
                   rows={2}
                   className="resize-none bg-white"
                 />
                 <Button
                   onClick={handleClose}
-                  disabled={
-                    updateMutation.isPending || closurePin.length < 6
-                  }
+                  disabled={updateMutation.isPending || closurePin.length < 6}
                   className="w-full bg-green-700 hover:bg-green-800 text-white h-12 gap-2"
                 >
                   {updateMutation.isPending ? (
@@ -529,7 +519,8 @@ export default function DetalleSolicitud() {
                   Solicitud recibida
                 </p>
                 <p className="text-xs text-green-600 mt-1">
-                  El medicamento ya fue entregado. Gracias por usar MedVene.
+                  El medicamento ya fue entregado. Gracias por usar
+                  MedVenezuela.
                 </p>
               </div>
             )}
@@ -580,7 +571,7 @@ export default function DetalleSolicitud() {
                 </label>
                 <Textarea
                   value={adminReason}
-                  onChange={(e) => setAdminReason(e.target.value)}
+                  onChange={e => setAdminReason(e.target.value)}
                   placeholder="Ej: Solicitante perdió el PIN de cierre; medicamento ya entregado."
                   rows={2}
                   className="resize-none bg-white"
@@ -593,7 +584,7 @@ export default function DetalleSolicitud() {
                 </label>
                 <Textarea
                   value={adminNotasCierre}
-                  onChange={(e) => setAdminNotasCierre(e.target.value)}
+                  onChange={e => setAdminNotasCierre(e.target.value)}
                   placeholder="Información adicional sobre el cierre..."
                   rows={2}
                   className="resize-none bg-white"
@@ -602,9 +593,7 @@ export default function DetalleSolicitud() {
               </div>
               <Button
                 onClick={handleAdminOverride}
-                disabled={
-                  adminCloseMutation.isPending || !adminReason.trim()
-                }
+                disabled={adminCloseMutation.isPending || !adminReason.trim()}
                 className="w-full bg-purple-700 hover:bg-purple-800 text-white h-10 gap-2"
               >
                 {adminCloseMutation.isPending ? (

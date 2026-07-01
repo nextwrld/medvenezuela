@@ -1,8 +1,23 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import { useNavigate } from "react-router";
-import { Search, Activity, Package, SlidersHorizontal, X, Map as MapIcon, List as ListIcon } from "lucide-react";
+import {
+  Search,
+  Activity,
+  Package,
+  SlidersHorizontal,
+  X,
+  Map as MapIcon,
+  List as ListIcon,
+} from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { trpc } from "@/providers/trpc";
 import Header from "@/components/Header";
@@ -20,6 +35,7 @@ export default function Home() {
   const [showFilters, setShowFilters] = useState(false);
   const [page, setPage] = useState(1);
   const [view, setView] = useState<"lista" | "mapa">("lista");
+  const [helpModalOpen, setHelpModalOpen] = useState(false);
 
   // Debounce search
   useEffect(() => {
@@ -33,7 +49,8 @@ export default function Home() {
   const { data, isLoading } = trpc.solicitudes.list.useQuery({
     search: debouncedSearch || undefined,
     estado: selectedEstado || undefined,
-    urgencia: (selectedUrgencia as "critico" | "moderado" | "estable") || undefined,
+    urgencia:
+      (selectedUrgencia as "critico" | "moderado" | "estable") || undefined,
     page,
     limit: 20,
   });
@@ -41,7 +58,9 @@ export default function Home() {
   const { data: stats } = trpc.solicitudes.stats.useQuery();
 
   const { data: mapPoints, isLoading: mapLoading } =
-    trpc.solicitudes.mapPoints.useQuery(undefined, { enabled: view === "mapa" });
+    trpc.solicitudes.mapPoints.useQuery(undefined, {
+      enabled: view === "mapa",
+    });
 
   const clearFilters = useCallback(() => {
     setSearch("");
@@ -64,20 +83,26 @@ export default function Home() {
             <div className="flex items-center gap-2 shrink-0">
               <Activity className="w-4 h-4 text-red-600" />
               <span className="text-sm">
-                <span className="font-semibold text-red-600">{stats?.activos ?? 0}</span>{" "}
+                <span className="font-semibold text-red-600">
+                  {stats?.activos ?? 0}
+                </span>{" "}
                 <span className="text-zinc-500">activas</span>
               </span>
             </div>
             <div className="flex items-center gap-2 shrink-0">
               <Package className="w-4 h-4 text-yellow-600" />
               <span className="text-sm">
-                <span className="font-semibold text-yellow-600">{stats?.enProceso ?? 0}</span>{" "}
+                <span className="font-semibold text-yellow-600">
+                  {stats?.enProceso ?? 0}
+                </span>{" "}
                 <span className="text-zinc-500">en proceso</span>
               </span>
             </div>
             <div className="flex items-center gap-2 shrink-0">
               <span className="text-sm">
-                <span className="font-semibold text-green-600">{stats?.recibidos ?? 0}</span>{" "}
+                <span className="font-semibold text-green-600">
+                  {stats?.recibidos ?? 0}
+                </span>{" "}
                 <span className="text-zinc-500">recibidas</span>
               </span>
             </div>
@@ -96,17 +121,18 @@ export default function Home() {
                 Ayudemos a los afectados del terremoto
               </h2>
               <p className="text-sm text-white/85 sm:text-base">
-                Conecta rápidamente donaciones y nuevas solicitudes de medicamentos.
+                Conecta rápidamente donaciones y nuevas solicitudes de
+                medicamentos.
               </p>
             </div>
 
             <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:justify-center lg:justify-end">
               <Button
-                asChild
                 variant="outline"
                 className="h-11 border-white/50 bg-white/10 px-5 text-white hover:bg-white/20 hover:text-white"
+                onClick={() => setHelpModalOpen(true)}
               >
-                <a href="#como-ayudar">¿Cómo ayudar?</a>
+                ¿Cómo ayudar?
               </Button>
               <Button
                 onClick={() => navigate("/solicitar")}
@@ -127,7 +153,7 @@ export default function Home() {
                 type="text"
                 placeholder="Buscar medicamento, hospital o ciudad..."
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={e => setSearch(e.target.value)}
                 className="pl-10 h-12 bg-white border-zinc-300 text-base"
               />
               {search && (
@@ -151,7 +177,7 @@ export default function Home() {
           {/* Emergency zone chips */}
           {!showFilters && (
             <div className="flex gap-2 overflow-x-auto pb-1">
-              {ZONAS_EMERGENCIA.map((zona) => (
+              {ZONAS_EMERGENCIA.map(zona => (
                 <button
                   key={zona}
                   onClick={() =>
@@ -178,11 +204,11 @@ export default function Home() {
                 </label>
                 <select
                   value={selectedEstado}
-                  onChange={(e) => setSelectedEstado(e.target.value)}
+                  onChange={e => setSelectedEstado(e.target.value)}
                   className="w-full h-10 px-3 rounded-lg border border-zinc-300 text-sm bg-white"
                 >
                   <option value="">Todos los estados</option>
-                  {ESTADOS_VENEZUELA.map((e) => (
+                  {ESTADOS_VENEZUELA.map(e => (
                     <option key={e} value={e}>
                       {e}
                     </option>
@@ -194,7 +220,7 @@ export default function Home() {
                   Urgencia
                 </label>
                 <div className="flex gap-2">
-                  {["", "critico", "moderado", "estable"].map((u) => (
+                  {["", "critico", "moderado", "estable"].map(u => (
                     <button
                       key={u}
                       onClick={() => setSelectedUrgencia(u)}
@@ -203,20 +229,20 @@ export default function Home() {
                           ? u === "critico"
                             ? "bg-red-600 text-white"
                             : u === "moderado"
-                            ? "bg-orange-500 text-white"
-                            : u === "estable"
-                            ? "bg-green-500 text-white"
-                            : "bg-zinc-800 text-white"
+                              ? "bg-orange-500 text-white"
+                              : u === "estable"
+                                ? "bg-green-500 text-white"
+                                : "bg-zinc-800 text-white"
                           : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
                       }`}
                     >
                       {u === ""
                         ? "Todas"
                         : u === "critico"
-                        ? "Crítico"
-                        : u === "moderado"
-                        ? "Moderado"
-                        : "Estable"}
+                          ? "Crítico"
+                          : u === "moderado"
+                            ? "Moderado"
+                            : "Estable"}
                     </button>
                   ))}
                 </div>
@@ -240,63 +266,6 @@ export default function Home() {
             </div>
           )}
         </div>
-
-        <section
-          id="como-ayudar"
-          className="mb-8 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm sm:p-6"
-        >
-            <div className="mb-5 text-center sm:text-left">
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-red-600">
-                Cómo ayudar
-              </p>
-              <h2 className="mt-2 text-xl font-bold tracking-tight text-zinc-900 sm:text-2xl">
-                Paso a paso para apoyar una solicitud
-              </h2>
-              <p className="mt-2 text-sm text-zinc-600 sm:text-base">
-                Sigue este proceso para ayudar de forma rápida, segura y ordenada.
-              </p>
-            </div>
-
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {[
-              {
-                step: "01",
-                title: "Revisa la necesidad",
-                description:
-                  "Usa la búsqueda y los filtros para encontrar solicitudes activas según medicamento, hospital, ciudad o nivel de urgencia.",
-              },
-              {
-                step: "02",
-                title: "Confirma que puedes ayudar",
-                description:
-                  "Abre la solicitud, verifica la cantidad requerida y asegúrate de contar con el medicamento o con una forma real de conseguirlo.",
-              },
-              {
-                step: "03",
-                title: "Contacta al solicitante",
-                description:
-                  "Escribe o llama al contacto publicado para confirmar disponibilidad, coordinar la entrega y evitar esfuerzos duplicados.",
-              },
-              {
-                step: "04",
-                title: "Coordina o crea una nueva solicitud",
-                description:
-                  "Si no encontraste la necesidad publicada, usa Nueva Solicitud para registrar el caso y hacerlo visible a otros donantes.",
-              },
-            ].map((item) => (
-              <div
-                key={item.step}
-                className="rounded-xl border border-zinc-200 bg-zinc-50 p-4"
-              >
-                <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-full bg-red-600 text-sm font-bold text-white">
-                  {item.step}
-                </div>
-                <h3 className="text-base font-semibold text-zinc-900">{item.title}</h3>
-                <p className="mt-2 text-sm leading-6 text-zinc-600">{item.description}</p>
-              </div>
-            ))}
-          </div>
-        </section>
 
         {/* Lista / Mapa toggle */}
         <div className="mb-4 inline-flex rounded-lg border border-zinc-300 bg-white p-0.5">
@@ -326,7 +295,8 @@ export default function Home() {
             {!isLoading && data && (
               <div className="mb-4">
                 <p className="text-sm text-zinc-500">
-                  {data.total} solicitud{data.total !== 1 ? "es" : ""} encontrada
+                  {data.total} solicitud{data.total !== 1 ? "es" : ""}{" "}
+                  encontrada
                   {data.total !== 1 ? "s" : ""}
                   {data.totalPages > 1 && (
                     <span className="text-zinc-400">
@@ -365,7 +335,7 @@ export default function Home() {
             {!isLoading && data && data.items.length > 0 && (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {data.items.map((solicitud) => (
+                  {data.items.map(solicitud => (
                     <SolicitudCard key={solicitud.id} solicitud={solicitud} />
                   ))}
                 </div>
@@ -377,7 +347,7 @@ export default function Home() {
                       variant="outline"
                       size="sm"
                       disabled={page === 1}
-                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                      onClick={() => setPage(p => Math.max(1, p - 1))}
                       className="border-zinc-300"
                     >
                       Anterior
@@ -389,7 +359,9 @@ export default function Home() {
                       variant="outline"
                       size="sm"
                       disabled={page === data.totalPages}
-                      onClick={() => setPage((p) => Math.min(data.totalPages, p + 1))}
+                      onClick={() =>
+                        setPage(p => Math.min(data.totalPages, p + 1))
+                      }
                       className="border-zinc-300"
                     >
                       Siguiente
@@ -454,16 +426,78 @@ export default function Home() {
               >
                 <MapaSolicitudes
                   points={(mapPoints ?? []).filter(
-                    (p): p is typeof p & { latitud: number; longitud: number } =>
-                      p.latitud !== null && p.longitud !== null,
+                    (
+                      p
+                    ): p is typeof p & { latitud: number; longitud: number } =>
+                      p.latitud !== null && p.longitud !== null
                   )}
-                  onSelect={(id) => navigate(`/solicitud/${id}`)}
+                  onSelect={id => navigate(`/solicitud/${id}`)}
                 />
               </Suspense>
             )}
           </div>
         )}
       </main>
+
+      <Dialog open={helpModalOpen} onOpenChange={setHelpModalOpen}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-3xl">
+          <DialogHeader>
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-red-600">
+              Cómo ayudar
+            </p>
+            <DialogTitle className="text-xl sm:text-2xl">
+              Paso a paso para apoyar una solicitud
+            </DialogTitle>
+            <DialogDescription className="text-sm sm:text-base">
+              Sigue este proceso para ayudar de forma rápida, segura y ordenada.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            {[
+              {
+                step: "01",
+                title: "Revisa la necesidad",
+                description:
+                  "Usa la búsqueda y los filtros para encontrar solicitudes activas según medicamento, hospital, ciudad o nivel de urgencia.",
+              },
+              {
+                step: "02",
+                title: "Confirma que puedes ayudar",
+                description:
+                  "Abre la solicitud, verifica la cantidad requerida y asegúrate de contar con el medicamento o con una forma real de conseguirlo.",
+              },
+              {
+                step: "03",
+                title: "Contacta al solicitante",
+                description:
+                  "Escribe o llama al contacto publicado para confirmar disponibilidad, coordinar la entrega y evitar esfuerzos duplicados.",
+              },
+              {
+                step: "04",
+                title: "Coordina o crea una nueva solicitud",
+                description:
+                  "Si no encontraste la necesidad publicada, usa Nueva Solicitud para registrar el caso y hacerlo visible a otros donantes.",
+              },
+            ].map(item => (
+              <div
+                key={item.step}
+                className="rounded-xl border border-zinc-200 bg-zinc-50 p-4"
+              >
+                <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-full bg-red-600 text-sm font-bold text-white">
+                  {item.step}
+                </div>
+                <h3 className="text-base font-semibold text-zinc-900">
+                  {item.title}
+                </h3>
+                <p className="mt-2 text-sm leading-6 text-zinc-600">
+                  {item.description}
+                </p>
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Footer */}
       <footer className="bg-white border-t border-zinc-200 mt-12">
@@ -478,7 +512,7 @@ export default function Home() {
               <div className="w-5 h-5 bg-red-600 rounded flex items-center justify-center">
                 <span className="text-white font-bold text-[8px]">M</span>
               </div>
-              <span>MedVene · Plataforma para emergencias médicas</span>
+              <span>MedVenezuela · Plataforma para emergencias médicas</span>
             </a>
             <div className="flex flex-col items-center gap-1 text-center sm:items-end sm:text-right">
               <span>Venezuela 2026</span>
@@ -491,8 +525,8 @@ export default function Home() {
                 Hecho por NextWrld
               </a>
               <span className="max-w-xs text-zinc-500">
-                A disposición para apoyar cualquier proyecto o necesidad que sume
-                en la respuesta ante este desastre.
+                A disposición para apoyar cualquier proyecto o necesidad que
+                sume en la respuesta ante este desastre.
               </span>
             </div>
           </div>
