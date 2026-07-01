@@ -21,6 +21,7 @@ import { trpc } from "@/providers/trpc";
 import Header from "@/components/Header";
 import { ESTADOS_VENEZUELA } from "@db/seed";
 import { coordsFromPosition, formatCoords } from "@/lib/geo";
+import { getMunicipios } from "@db/municipios";
 
 const UbicacionPicker = lazy(() => import("@/components/UbicacionPicker"));
 
@@ -112,7 +113,7 @@ export default function NuevaSolicitud() {
     if (!form.cantidad.trim()) newErrors.cantidad = "Campo requerido";
     if (!form.hospital.trim()) newErrors.hospital = "Campo requerido";
     if (!form.estado) newErrors.estado = "Selecciona un estado";
-    if (!form.ciudad.trim()) newErrors.ciudad = "Campo requerido";
+    if (!form.ciudad.trim()) newErrors.ciudad = "Selecciona un municipio";
     if (!form.telefono.trim()) newErrors.telefono = "Campo requerido";
     if (!form.nombreSolicitante.trim())
       newErrors.nombreSolicitante = "Campo requerido";
@@ -162,6 +163,18 @@ export default function NuevaSolicitud() {
     }
   };
 
+  // Al cambiar de estado, el municipio (campo `ciudad`) deja de ser válido —
+  // se resetea para forzar una nueva selección del catálogo del nuevo estado.
+  const handleEstadoChange = (estado: string) => {
+    setForm((prev) => ({ ...prev, estado, ciudad: "" }));
+    setErrors((prev) => {
+      const next = { ...prev };
+      delete next.estado;
+      delete next.ciudad;
+      return next;
+    });
+  };
+
   const copyToClipboard = async (
     text: string,
     type: "pin-cierre" | "link"
@@ -196,7 +209,7 @@ export default function NuevaSolicitud() {
   if (submitted && result) {
     const link = `${window.location.origin}/solicitud/${result.id}`;
     const waMessage = encodeURIComponent(
-      `🚨 Solicitud de medicamento en MedVene\n\nSe necesita: ${form.medicamento}\nPrincipio activo: ${form.principioActivo}\nCantidad: ${form.cantidad}\nHospital: ${form.hospital}\nCiudad: ${form.ciudad}, ${form.estado}\nContacto: ${form.telefono}\n\nVer solicitud: ${link}`
+      `🚨 Solicitud de medicamento en MedVene\n\nSe necesita: ${form.medicamento}\nPrincipio activo: ${form.principioActivo}\nCantidad: ${form.cantidad}\nHospital: ${form.hospital}\nMunicipio: ${form.ciudad}, ${form.estado}\nContacto: ${form.telefono}\n\nVer solicitud: ${link}`
     );
 
     return (
@@ -443,7 +456,7 @@ export default function NuevaSolicitud() {
                   </label>
                   <select
                     value={form.estado}
-                    onChange={(e) => updateField("estado", e.target.value)}
+                    onChange={(e) => handleEstadoChange(e.target.value)}
                     className={`w-full h-12 px-3 rounded-lg border bg-white text-sm ${
                       errors.estado ? "border-red-300" : "border-zinc-300"
                     }`}
@@ -461,14 +474,27 @@ export default function NuevaSolicitud() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-zinc-700 mb-1.5">
-                    Ciudad <span className="text-red-500">*</span>
+                    Municipio <span className="text-red-500">*</span>
                   </label>
-                  <Input
+                  <select
                     value={form.ciudad}
                     onChange={(e) => updateField("ciudad", e.target.value)}
-                    placeholder="Ej: Caracas"
-                    className={`h-12 ${errors.ciudad ? "border-red-300" : ""}`}
-                  />
+                    disabled={!form.estado}
+                    className={`w-full h-12 px-3 rounded-lg border bg-white text-sm disabled:bg-zinc-100 disabled:text-zinc-400 ${
+                      errors.ciudad ? "border-red-300" : "border-zinc-300"
+                    }`}
+                  >
+                    <option value="">
+                      {form.estado
+                        ? "Seleccionar..."
+                        : "Elige un estado primero"}
+                    </option>
+                    {getMunicipios(form.estado).map((m) => (
+                      <option key={`${m.nombre}-${m.capital}`} value={m.nombre}>
+                        {m.nombre} ({m.capital})
+                      </option>
+                    ))}
+                  </select>
                   {errors.ciudad && (
                     <p className="text-xs text-red-500 mt-1">{errors.ciudad}</p>
                   )}
